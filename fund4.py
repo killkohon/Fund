@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd 
 import numpy as np 
-import pymysql
+import sqlite3
 from DBUtils.PersistentDB import PersistentDB
 import matplotlib.pyplot as plt
 from scipy import stats
@@ -45,18 +45,14 @@ class polyfit:
 class fundnetv:
 	def __init__(self):
 		self.PooL = PersistentDB(
-		    creator = pymysql,  #使用链接数据库的模块
+		    creator = sqlite3,  #使用链接数据库的模块
 			maxusage = None, #一个链接最多被使用的次数，None表示无限制
 			setsession = [], #开始会话前执行的命令
 			ping = 0, #ping MySQL服务端,检查服务是否可用
  			closeable = False, #conn.close()实际上被忽略，供下次使用，直到线程关闭，自动关闭链接，而等于True时，conn.close()真的被关闭
 			threadlocal = None, # 本线程独享值的对象，用于保存链接对象
-			host = '192.168.136.31',
-			port = 3306,
-			user = 'fund',
-			password = '123456',
-			database = 'fund',
-			charset = 'utf8'
+			#database = 'D:\\workspace\\personal\\Fund\\fund.db'
+			database = "./fund.db"
 			)
 		self.isopen = lambda x: x.find("开放")>=0
 		self.fundnames={}
@@ -157,7 +153,7 @@ class fundnetv:
 		try:
 			conn= self.PooL.connection()
 			cursor=conn.cursor()
-			cursor.execute("select distinct(fundcode) from fund_values ")
+			cursor.execute("select distinct(fundcode) from fund_meta")
 			__result=cursor.fetchone()
 			while __result is not None:
 				print("fundcode:{}".format(__result[0]))
@@ -179,9 +175,9 @@ class fundnetv:
 			cursor.execute("select max(vdate) as lastdate from fund_values where fundcode='{}'".format(tickcode))
 			__result=cursor.fetchone()
 			if __result[0] is not None:
-				nextdate=(__result[0]+dt.timedelta(1)).__format__('%Y-%m-%d')
+				nextdate=(dt.datetime.strptime(__result[0],'%Y-%m-%d')+dt.timedelta(1)).__format__('%Y-%m-%d')
 		except:
-			print("except at find the last vdate")
+			print("except at grabnetv({})".format(tickcode))
 			pass
 		else:
 			pass
@@ -206,7 +202,8 @@ class fundnetv:
 				else:
 					GoAhead=False
 	def savedata(self,tickcode,valuedate,netv,unfixednetv,buyable=True,salable=True,dividend=""):
-		try:
+		#try:
+		if True :
 			conn = self.PooL.connection()
 			cursor = conn.cursor()
 			data=(tickcode,valuedate,netv,self.replacenan(unfixednetv,netv),buyable,salable,dividend)
@@ -214,10 +211,10 @@ class fundnetv:
 			cursor.execute("insert into fund_values(fundcode,vdate,netvalue,unfixedvalue,buyable,salable,dividend)values('%s','%s',%f,%f,%d,%d,'%s')"%data)
 			result = cursor.fetchall()
 			conn.commit()
-		except:
-			print("exception in savedata")
-			pass
-		finally:
+		#except:
+		#	print("exception in savedata")
+		#	pass
+		#finally:
 			cursor.close()
 			conn.close()
 	def loadnetv(self,tickcode,count=200):
@@ -389,6 +386,7 @@ class fundnetv:
 			cursor.close()
 			conn.close()
 		return items
+
 class FundChart(QWidget):
 	def __init__(self):
 		super(FundChart, self).__init__()
