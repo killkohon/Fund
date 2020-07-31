@@ -10,7 +10,8 @@ from scipy import stats
 from numpy.linalg import solve
 import urllib.parse 
 import json
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton, QListWidgetItem, QGridLayout, QListWidget
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QHBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton, QListWidgetItem, QGridLayout, QListWidget, QLineEdit
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import sys
 
@@ -132,7 +133,7 @@ class fundnetv:
 		try:
 			conn= self.PooL.connection()
 			cursor=conn.cursor()
-			cursor.execute("select distinct(fundcode) from fund_values ")
+			cursor.execute("select distinct(fundcode) from fund_values where fundcode not in (select fundcode from fund_meta)")
 			__result=cursor.fetchone()
 			while __result is not None:
 				print("fundcode:{}".format(__result[0]))
@@ -169,20 +170,21 @@ class fundnetv:
 			conn.close()
 	def grabnetv(self,tickcode):
 		nextdate='2020-01-02'
-		#try:
-		if True :
+		__isnewfund=True
+		try:
 			conn= self.PooL.connection()
 			cursor=conn.cursor()
 			cursor.execute("select max(vdate) as lastdate from fund_values where fundcode='{}'".format(tickcode))
 			__result=cursor.fetchone()
 			if __result[0] is not None:
 				nextdate=(dt.datetime.strptime(__result[0],'%Y-%m-%d')+dt.timedelta(1)).__format__('%Y-%m-%d')
-		#except:
-		#	print("except at grabnetv({})".format(tickcode))
-		#	pass
-		#else:
-		#	pass
-		#finally:
+				__isnewfund=False
+		except:
+			print("except at grabnetv({})".format(tickcode))
+			pass
+		else:
+			pass
+		finally:
 			cursor.close()
 			conn.close()
 		GoAhead= True
@@ -202,9 +204,14 @@ class fundnetv:
 					nextdate=(__tempdate+dt.timedelta(7)).__format__("%Y-%m-%d")
 				else:
 					GoAhead=False
+		#拉取元数据
+		if __isnewfund == True :
+			code,meta=self.grabmeta(tickcode)
+			for data in meta["Datas"]:
+				if (data["CATEGORY"] == 700 and data["CODE"] == code) :
+					self.savemeta(code,data["NAME"],data["CATEGORY"],data["CATEGORYDESC"],data["FundBaseInfo"]["JJGS"],data["FundBaseInfo"]["JJJL"])
 	def savedata(self,tickcode,valuedate,netv,unfixednetv,buyable=True,salable=True,dividend=""):
-		#try:
-		if True :
+		try:
 			conn = self.PooL.connection()
 			cursor = conn.cursor()
 			data=(tickcode,valuedate,netv,self.replacenan(unfixednetv,netv),buyable,salable,dividend)
@@ -212,10 +219,10 @@ class fundnetv:
 			cursor.execute("insert into fund_values(fundcode,vdate,netvalue,unfixedvalue,buyable,salable,dividend)values('%s','%s',%f,%f,%d,%d,'%s')"%data)
 			result = cursor.fetchall()
 			conn.commit()
-		#except:
-		#	print("exception in savedata")
-		#	pass
-		#finally:
+		except:
+			print("exception in savedata")
+			pass
+		finally:
 			cursor.close()
 			conn.close()
 	def loadnetv(self,tickcode,count=200):
@@ -389,13 +396,13 @@ class fundnetv:
 		return items
 
 class FundChart(QWidget):
-	def __init__(self):
+	def __init__(self,fundmodel):
 		super(FundChart, self).__init__()
-		self.fund=fundnetv()
+		self.fund=fundmodel
 		self.initUI()
 	def initUI(self):
 		self.gridlayout=QGridLayout()
-		self.gridlayout.setSpacing(10)
+		self.gridlayout.setSpacing(5)
 		self.fundlist=QListWidget(self)
 		self.fundlist.setMinimumWidth(240)
 		self.fundlist.setMaximumWidth(240)
@@ -416,10 +423,55 @@ class FundChart(QWidget):
 		self.figure.clf()
 		self.fund.showfigure(obj.data,figure=self.figure)
 		self.canvas.draw()
+class manipulate_panel(QWidget):
+	def __init__(self,fundmodel):
+		super(manipulate_panel, self).__init__()
+		self.fund=fundmodel
+		self.initUI()
+	def initUI(self):
+		self.hboxlayout=QHBoxLayout()
+		self.hboxlayout.setSpacing(6)
+		self.fundcodeedit=QLineEdit()
+		self.fundcodeedit.setMaximumWidth(100)
+		self.fundcodeedit.setMaxLength(6)
+		self.fundcodeedit.setInputMask('999999')
+		self.grabbtn=QPushButton("PullData")
+		self.grabbtn.setMaximumWidth(100)
+		self.grabbtn.clicked.connect(self.grabbtnclick)
+		self.grabnetvbtn=QPushButton("AddFund")
+		self.grabnetvbtn.setMaximumWidth(100)
+		self.grabnetvbtn.clicked.connect(self.grabnetvbtnclick)
+		self.hboxlayout.addWidget(self.fundcodeedit,alignment=Qt.AlignLeft)
+		self.hboxlayout.addWidget(self.grabnetvbtn,alignment=Qt.AlignLeft)
+		self.hboxlayout.addWidget(self.grabbtn,alignment=Qt.AlignLeft)
+		self.setLayout(self.hboxlayout)
+	def grabbtnclick(self):
+		self.fund.grabfromdb()
+	def grabnetvbtnclick(self):
+		fundcode="{}".format(self.fundcodeedit.text())
+		if len(fundcode) == 6 :
+			print("FundCode: {}".format(fundcode))
+			self.fund.grabnetv(fundcode)
+		self.fundcodeedit.clear()
+		self.fundcodeedit.setFocus()
+		pass
+class MainUI(QWidget):
+	def __init__(self):
+		super(MainUI, self).__init__()
+		self.fund=fundnetv()
+		self.initUI()
+	def initUI(self):
+		self.vboxlayout=QVBoxLayout()
+		self.vboxlayout.setSpacing(5)
+		self.fundchart=FundChart(self.fund)
+		self.vboxlayout.addWidget(self.fundchart)
+		self.manipulatepanel=manipulate_panel(self.fund)
+		self.vboxlayout.addWidget(self.manipulatepanel)
+		self.setLayout(self.vboxlayout)
 
 
 if __name__ == '__main__':
 	app=QApplication([])
-	ui=FundChart()
+	ui=MainUI()
 	ui.show()
 	sys.exit(app.exec_())
