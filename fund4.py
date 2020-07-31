@@ -169,19 +169,20 @@ class fundnetv:
 			conn.close()
 	def grabnetv(self,tickcode):
 		nextdate='2020-01-02'
-		try:
+		#try:
+		if True :
 			conn= self.PooL.connection()
 			cursor=conn.cursor()
 			cursor.execute("select max(vdate) as lastdate from fund_values where fundcode='{}'".format(tickcode))
 			__result=cursor.fetchone()
 			if __result[0] is not None:
 				nextdate=(dt.datetime.strptime(__result[0],'%Y-%m-%d')+dt.timedelta(1)).__format__('%Y-%m-%d')
-		except:
-			print("except at grabnetv({})".format(tickcode))
-			pass
-		else:
-			pass
-		finally:
+		#except:
+		#	print("except at grabnetv({})".format(tickcode))
+		#	pass
+		#else:
+		#	pass
+		#finally:
 			cursor.close()
 			conn.close()
 		GoAhead= True
