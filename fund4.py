@@ -237,7 +237,7 @@ class fundnetv:
 		finally:
 			cursor.close()
 			conn.close()
-	def slideaverage(self,source,window=20):
+	def movingaverage(self,source,window=20):
 		count=source.size
 		target=np.zeros(count,dtype=float)
 		sum=0.0
@@ -263,10 +263,10 @@ class fundnetv:
 	def showfigure(self,tickcode,window=45,figure=None):
 		df=self.loadnetv(tickcode)
 		netv=df['unfixedvalue'].values.astype(float)
-		sa=self.slideaverage(netv,window)
+		sa=self.movingaverage(netv,window)
 		ca=self.continousaverage(netv)
 		dv=netv-sa
-		sadv=self.slideaverage(dv,window)
+		sadv=self.movingaverage(dv,window)
 		if figure == None :
 			figure=plt.figure()
 		figure.suptitle("{} {}".format(tickcode,self.fundname(tickcode)))
@@ -298,10 +298,10 @@ class fundnetv:
 		df=self.loadnetv(tickcode)
 		netv=df['unfixedvalue'].values.astype(float)
 		val=df['netvalue'].values.astype(float)
-		sa=self.slideaverage(netv,window)
+		sa=self.movingaverage(netv,window)
 		ca=self.continousaverage(netv)
 		dv=netv-sa
-		sadv=self.slideaverage(dv,window)
+		sadv=self.movingaverage(dv,window)
 		x_axis=np.linspace(1,netv.size,netv.size)
 		pf=polyfit()
 		pf.fitting(x_axis,netv)
@@ -318,19 +318,19 @@ class fundnetv:
 	def showvalue(self,tickcode,window=45):
 		df=self.loadnetv(tickcode)
 		netv=df['unfixedvalue'].values.astype(float)
-		sa=self.slideaverage(netv,window)
+		sa=self.movingaverage(netv,window)
 		ca=self.continousaverage(netv)
 		dv=netv-sa
-		sadv=self.slideaverage(dv,window)
+		sadv=self.movingaverage(dv,window)
 		cdf=stats.norm.cdf((sadv-np.mean(sadv))/np.std(sadv))
 		return tickcode,netv[-1],sa[-1],ca[-1],cdf[-1]
 	def showtest(self,tickcode,window=45):
 		df=self.loadnetv(tickcode)
 		netv=df['unfixedvalue'].values.astype(float)
-		sa=self.slideaverage(netv,window)
+		sa=self.movingaverage(netv,window)
 		ca=self.continousaverage(netv)
 		dv=netv-sa
-		sadv=self.slideaverage(dv,window)
+		sadv=self.movingaverage(dv,window)
 		cdf=stats.norm.cdf((sadv-np.mean(sadv))/np.std(sadv))
 		x_axis=np.linspace(1,netv.size,netv.size)
 		sorted_cdf=np.sort(cdf)
