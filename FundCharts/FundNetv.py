@@ -252,8 +252,12 @@ class fundnetv:
 		pf=polyfit.polyfit()
 		pf.fitting(x_axis,netv)
 		fitting=pf.calc(x_axis)
+		
+		dpf=netv-fitting
+		sfitting=self.slideaverage(dpf,window)
 		cdf=stats.norm.cdf((sadv-np.mean(sadv))/np.std(sadv))
 		cdf2=stats.norm.cdf((dv-np.mean(dv))/np.std(dv))
+		cdf3=stats.norm.cdf((sfitting-np.mean(sfitting))/np.std(sfitting))
 		p1=figure.add_subplot(3,1,1)
 		p2=figure.add_subplot(3,1,2)
 		p3=figure.add_subplot(3,1,3)
@@ -266,6 +270,7 @@ class fundnetv:
 		p3.plot(x_axis,(netv-np.min(netv))/(np.max(netv)-np.min(netv)),label='reg. netv')
 		p3.plot(x_axis,cdf,label='CDF(sadv)')
 		p3.plot(x_axis,cdf2,label='CDF(dv)')
+		p3.plot(x_axis,cdf3,label='CDF(safit)')
 		p1.grid()
 		p2.grid()
 		p3.grid()
