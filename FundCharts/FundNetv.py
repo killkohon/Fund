@@ -241,10 +241,10 @@ class fundnetv:
 	def showfigure(self,tickcode,window=45,figure=None):
 		df=self.loadnetv(tickcode)
 		netv=df['unfixedvalue'].values.astype(float)
-		sa=self.movingaverage(netv,window)
+		ma=self.movingaverage(netv,window)
 		ca=self.continousaverage(netv)
-		dv=netv-sa
-		sadv=self.movingaverage(dv,window)
+		dv=netv-ma
+		madv=self.movingaverage(dv,window)
 		if figure == None :
 			figure=plt.figure()
 		figure.suptitle("{} {}".format(tickcode,self.fundname(tickcode)))
@@ -255,20 +255,20 @@ class fundnetv:
 		
 		dpf=netv-fitting
 		sfitting=self.movingaverage(dpf,window)
-		cdf=stats.norm.cdf((sadv-np.mean(sadv))/np.std(sadv))
+		cdf=stats.norm.cdf((madv-np.mean(madv))/np.std(madv))
 		cdf2=stats.norm.cdf((dv-np.mean(dv))/np.std(dv))
 		cdf3=stats.norm.cdf((sfitting-np.mean(sfitting))/np.std(sfitting))
 		p1=figure.add_subplot(3,1,1)
 		p2=figure.add_subplot(3,1,2)
 		p3=figure.add_subplot(3,1,3)
 		p1.plot(x_axis,netv,label='netv')
-		p1.plot(x_axis,sa,label='sa')
+		p1.plot(x_axis,ma,label='ma')
 		p1.plot(x_axis,ca,label='cont. average')
 		p1.plot(x_axis,fitting,label='fit')
-		p2.plot(x_axis,dv,label='dv(netv-sa)')
-		p2.plot(x_axis,sadv,label='sadv')
+		p2.plot(x_axis,dv,label='dv(netv-ma)')
+		p2.plot(x_axis,madv,label='madv')
 		p3.plot(x_axis,(netv-np.min(netv))/(np.max(netv)-np.min(netv)),label='reg. netv')
-		p3.plot(x_axis,cdf,label='CDF(sadv)')
+		p3.plot(x_axis,cdf,label='CDF(madv)')
 		p3.plot(x_axis,cdf2,label='CDF(dv)')
 		p3.plot(x_axis,cdf3,label='CDF(safit)')
 		p1.grid()
