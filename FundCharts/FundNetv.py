@@ -123,8 +123,6 @@ class fundnetv:
 		except:
 			print("except at find the last vdate")
 			pass
-		else:
-			pass
 		finally:
 			cursor.close()
 			conn.close()
@@ -141,13 +139,11 @@ class fundnetv:
 		except:
 			print("except at find the last vdate")
 			pass
-		else:
-			pass
 		finally:
 			cursor.close()
 			conn.close()
 	def grabnetv(self,tickcode):
-		nextdate='2020-01-02'
+		nextdate='2019-06-01'
 		__isnewfund=True
 		try:
 			conn= self.PooL.connection()
@@ -159,8 +155,6 @@ class fundnetv:
 				__isnewfund=False
 		except:
 			print("except at grabnetv({})".format(tickcode))
-			pass
-		else:
 			pass
 		finally:
 			cursor.close()
@@ -203,11 +197,11 @@ class fundnetv:
 		finally:
 			cursor.close()
 			conn.close()
-	def loadnetv(self,tickcode,count=200):
+	def loadnetv(self,tickcode,count=300):
 		try:
 			conn=self.PooL.connection()
 			cursor=conn.cursor()
-			cursor.execute("select * from fund_values where fundcode='{}' order by vdate limit {}".format(tickcode,count))
+			cursor.execute("select * from (select * from fund_values where fundcode='{}' order by vdate desc limit {}) order by vdate".format(tickcode,count))
 			df=pd.DataFrame(list(cursor.fetchall()),columns=[x[0] for x in cursor.description ])
 			return df 
 		except:
@@ -261,16 +255,16 @@ class fundnetv:
 		p1=figure.add_subplot(3,1,1)
 		p2=figure.add_subplot(3,1,2)
 		p3=figure.add_subplot(3,1,3)
-		p1.plot(x_axis,netv,label='netv')
-		p1.plot(x_axis,ma,label='ma')
-		p1.plot(x_axis,ca,label='cont. average')
+		p1.plot(x_axis,netv,label='netv[{}]'.format(round(netv[-1],3)))
+		p1.plot(x_axis,ma,label='ma[{}]'.format(round(ma[-1],3)))
+		p1.plot(x_axis,ca,label='cont. average[{}]'.format(round(ca[-1],3)))
 		p1.plot(x_axis,fitting,label='fit')
 		p2.plot(x_axis,dv,label='dv(netv-ma)')
 		p2.plot(x_axis,madv,label='madv')
 		p3.plot(x_axis,(netv-np.min(netv))/(np.max(netv)-np.min(netv)),label='reg. netv')
-		p3.plot(x_axis,cdf,label='CDF(madv)')
-		p3.plot(x_axis,cdf2,label='CDF(dv)')
-		p3.plot(x_axis,cdf3,label='CDF(safit)')
+		p3.plot(x_axis,cdf,label='CDF(madv)[{}]'.format(round(cdf[-1],2)))
+		p3.plot(x_axis,cdf2,label='CDF(dv)[{}]'.format(round(cdf2[-1],2)))
+		p3.plot(x_axis,cdf3,label='CDF(safit)[{}]'.format(round(cdf3[-1],2)))
 		p1.grid()
 		p2.grid()
 		p3.grid()
