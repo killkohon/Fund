@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
 import datetime as dt
 from bs4 import BeautifulSoup
 import requests
@@ -20,7 +23,7 @@ class ParameterException(Exception):
 	def __init__(self,value):
 		self.value=value
 	def __str__(self):
-		print("Parameter Exception！")
+		print("Parameter Exception!")
 		return repr(self.value)
 class fundnetv:
 	def __init__(self):
@@ -120,9 +123,9 @@ class fundnetv:
 					if (data["CATEGORY"] == 700 and data["CODE"] == code) :
 						self.savemeta(code,data["NAME"],data["CATEGORY"],data["CATEGORYDESC"],data["FundBaseInfo"]["JJGS"],data["FundBaseInfo"]["JJJL"])
 				__result=cursor.fetchone()
-		except:
+		except Exception as ex :
 			print("except at find the last vdate")
-			pass
+			print(ex)
 		finally:
 			cursor.close()
 			conn.close()
@@ -136,9 +139,9 @@ class fundnetv:
 				print("fundcode:{}".format(__result[0]))
 				self.grabnetv(__result[0])
 				__result=cursor.fetchone()
-		except:
+		except Exception as ex :
 			print("except at find the last vdate")
-			pass
+			print(ex)
 		finally:
 			cursor.close()
 			conn.close()
