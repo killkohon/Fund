@@ -16,7 +16,9 @@ import json
 import sys
 import polyfit
 
-plt.rcParams['font.sans-serif']=['SimHei'] 
+#plt.rcParams['font.sans-serif']=['SimHei']
+plt.rcParams['font.sans-serif']=['KaiTi']
+plt.rcParams['font.serif'] = ['KaiTi']
 plt.rcParams['axes.unicode_minus']=False
 
 class ParameterException(Exception):
@@ -57,8 +59,8 @@ class fundnetv:
 					return result[0]
 				else:
 					return "nil"
-			except:
-				pass
+			except Exception as ex:
+				print(ex)
 			finally:
 				cursor.close()
 				conn.close()
@@ -104,9 +106,9 @@ class fundnetv:
 			cursor.execute("insert into fund_meta(fundcode,fundname,category,categoryname,company,manager)values('%s','%s','%s','%s','%s','%s')"%data)
 			result = cursor.fetchall()
 			conn.commit()
-		except:
+		except Exception as ex:
 			print("exception in savedata")
-			pass
+			print(ex)
 		finally:
 			cursor.close()
 			conn.close()
@@ -156,9 +158,9 @@ class fundnetv:
 			if __result[0] is not None:
 				nextdate=(dt.datetime.strptime(__result[0],'%Y-%m-%d')+dt.timedelta(1)).__format__('%Y-%m-%d')
 				__isnewfund=False
-		except:
+		except Exception as ex :
 			print("except at grabnetv({})".format(tickcode))
-			pass
+			print(ex)
 		finally:
 			cursor.close()
 			conn.close()
@@ -194,9 +196,9 @@ class fundnetv:
 			cursor.execute("insert into fund_values(fundcode,vdate,netvalue,unfixedvalue,buyable,salable,dividend)values('%s','%s',%f,%f,%d,%d,'%s')"%data)
 			result = cursor.fetchall()
 			conn.commit()
-		except:
+		except Exception as ex :
 			print("exception in savedata")
-			pass
+			print(ex)
 		finally:
 			cursor.close()
 			conn.close()
@@ -207,8 +209,8 @@ class fundnetv:
 			cursor.execute("select * from (select * from fund_values where fundcode='{}' order by vdate desc limit {}) order by vdate".format(tickcode,count))
 			df=pd.DataFrame(list(cursor.fetchall()),columns=[x[0] for x in cursor.description ])
 			return df 
-		except:
-			pass
+		except Exception as ex :
+			print(ex)
 		finally:
 			cursor.close()
 			conn.close()
@@ -237,6 +239,7 @@ class fundnetv:
 		return target
 	def showfigure(self,tickcode,window=45,figure=None):
 		df=self.loadnetv(tickcode)
+		lastdate=df['vdate'].values[-1]
 		netv=df['unfixedvalue'].values.astype(float)
 		ma=self.movingaverage(netv,window)
 		ca=self.continousaverage(netv)
@@ -244,8 +247,9 @@ class fundnetv:
 		madv=self.movingaverage(dv,window)
 		if figure == None :
 			figure=plt.figure()
-		figure.suptitle("{} {}".format(tickcode,self.fundname(tickcode)))
+		figure.suptitle("{} {} {}".format(tickcode,self.fundname(tickcode),lastdate))
 		x_axis=np.linspace(1,netv.size,netv.size)
+
 		pf=polyfit.polyfit()
 		pf.fitting(x_axis,netv)
 		fitting=pf.calc(x_axis)
@@ -258,6 +262,7 @@ class fundnetv:
 		p1=figure.add_subplot(3,1,1)
 		p2=figure.add_subplot(3,1,2)
 		p3=figure.add_subplot(3,1,3)
+
 		p1.plot(x_axis,netv,label='netv[{}]'.format(round(netv[-1],3)))
 		p1.plot(x_axis,ma,label='ma[{}]'.format(round(ma[-1],3)))
 		p1.plot(x_axis,ca,label='cont. average[{}]'.format(round(ca[-1],3)))
@@ -352,8 +357,8 @@ class fundnetv:
 				self.fundnames[__result[0]]=__result[1]
 				__result=cursor.fetchone()
 				__ind+=1
-		except:
-			pass
+		except Exception as ex :
+			print(ex)
 		finally:
 			cursor.close()
 			conn.close()
@@ -368,8 +373,8 @@ class fundnetv:
 				self.fundnames[__result[0]]=__result[1]
 				items[__result[0]]=__result[1]
 				__result=cursor.fetchone()
-		except:
-			pass
+		except Exception as ex :
+			print(ex)
 		finally:
 			cursor.close()
 			conn.close()
