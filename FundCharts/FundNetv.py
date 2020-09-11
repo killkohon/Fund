@@ -15,6 +15,8 @@ import urllib.parse
 import json
 import sys
 import polyfit
+from concurrent.futures import ThreadPoolExecutor
+
 
 #plt.rcParams['font.sans-serif']=['SimHei']
 plt.rcParams['font.sans-serif']=['KaiTi']
@@ -40,6 +42,7 @@ class fundnetv:
 			)
 		self.isopen = lambda x: x.find("开放")>=0
 		self.fundnames={}
+		self.threadPool=ThreadPoolExecutor(max_workers=5, thread_name_prefix="thread_")
 	def replacenan(self,x,y):
 		if np.isnan(x):
 			return y
@@ -131,6 +134,7 @@ class fundnetv:
 		finally:
 			cursor.close()
 			conn.close()
+
 	def grabfromdb(self):
 		try:
 			conn= self.PooL.connection()
@@ -139,7 +143,8 @@ class fundnetv:
 			__result=cursor.fetchone()
 			while __result is not None:
 				print("fundcode:{}".format(__result[0]))
-				self.grabnetv(__result[0])
+				future=self.threadPool.submit(self.grabnetv,__result[0])
+				future.add_done_callback(self.callback_grabnetv)
 				__result=cursor.fetchone()
 		except Exception as ex :
 			print("except at find the last vdate")
@@ -147,6 +152,8 @@ class fundnetv:
 		finally:
 			cursor.close()
 			conn.close()
+	def callback_grabnetv(self,future):
+		pass
 	def grabnetv(self,tickcode):
 		nextdate='2019-06-01'
 		__isnewfund=True
@@ -166,7 +173,7 @@ class fundnetv:
 			conn.close()
 		GoAhead= True
 		while GoAhead:
-			print("Next date: {}".format(nextdate))
+			#print("Next date: {}".format(nextdate))
 			df=self.fund_in_days(tickcode,nextdate,8)
 			data=df.values
 			if (np.shape(data)[0]>0):
