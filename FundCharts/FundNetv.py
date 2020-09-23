@@ -357,7 +357,7 @@ class fundnetv:
 		try:
 			conn=self.PooL.connection()
 			cursor=conn.cursor()
-			cursor.execute("select fundcode,fundname from fund_meta order by fundcode")
+			cursor.execute("select fundcode,fundname from fund_meta order by cdfma,fundcode")
 			__result=cursor.fetchone()
 			while __result is not None:
 				print("{} \t {} \t {}".format(__ind,__result[0],__result[1]))
@@ -368,13 +368,13 @@ class fundnetv:
 			print(ex)
 		finally:
 			cursor.close()
-			conn.close()
+			conn.close()		
 	def getitems(self):
 		items={}
 		try:
 			conn=self.PooL.connection()
 			cursor=conn.cursor()
-			cursor.execute("select fundcode,fundname from fund_meta order by fundcode")
+			cursor.execute("select fundcode,fundname from fund_meta order by cdfma,fundcode")
 			__result=cursor.fetchone()
 			while __result is not None:
 				self.fundnames[__result[0]]=__result[1]
@@ -386,3 +386,35 @@ class fundnetv:
 			cursor.close()
 			conn.close()
 		return items
+	def async_refreshcdfma(self,window=45):
+		future=self.threadPool.submit(self.refreshcdfma,window)
+		future.add_done_callback(self.callback_refreshcdfma)
+	def callback_refreshcdfma(self,future):
+		pass
+	def refreshcdfma(self,window=45):
+		try:
+			conn = self.PooL.connection()
+			cursor = conn.cursor()
+			items=self.getitems()
+			__it=iter(items)
+			count=0
+			for item in __it :
+				df=self.loadnetv(item)
+				netv=df['unfixedvalue'].values.astype(float)
+				ma=self.movingaverage(netv,window)
+				dv=netv-ma
+				madv=self.movingaverage(dv,window)
+				cdf=stats.norm.cdf((madv-np.mean(madv))/np.std(madv))
+				cmd="update fund_meta set cdfma={} where fundcode='{}'".format(cdf[-1],item)
+				cursor.execute(cmd)
+				count+=1
+				if (count%10)==0 :
+					conn.commit()
+			conn.commit()
+		except Exception as ex :
+			print("exception in refreshcdfma")
+			print(ex)
+		finally:
+			cursor.close()
+			conn.close()
+

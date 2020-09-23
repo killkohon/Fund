@@ -4,10 +4,12 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QHBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import sys
 import matplotlib.pyplot as plt
+from concurrent.futures import ThreadPoolExecutor
 
 class FundChart(QWidget):
 	def __init__(self,fundmodel):
 		super(FundChart, self).__init__()
+		self.threadPool=ThreadPoolExecutor(max_workers=5, thread_name_prefix="thread_")
 		self.fund=fundmodel
 		self.initUI()
 	def initUI(self):
@@ -24,15 +26,30 @@ class FundChart(QWidget):
 			self.fundlist.addItem(__item)
 		self.fundlist.itemClicked.connect(self.selectItem)
 		self.gridlayout.addWidget(self.fundlist,1,0)
+		self.refreshbtn=QPushButton("Refresh")
+		self.refreshbtn.setMaximumWidth(100)
+		self.refreshbtn.clicked.connect(self.refreshbtnclick)
+		self.gridlayout.addWidget(self.refreshbtn,2,0)
 		self.figure=plt.figure()
 		self.canvas=FigureCanvas(self.figure)
-		self.gridlayout.addWidget(self.canvas,1,1)
+		self.gridlayout.addWidget(self.canvas,1,1,2,1)
 		self.canvas.draw()
 		self.setLayout(self.gridlayout)
 	def selectItem(self,obj):
 		self.figure.clf()
 		self.fund.showfigure(obj.data,figure=self.figure)
 		self.canvas.draw()
+	def refreshbtnclick(self):
+		future=self.threadPool.submit(self.fund.refreshcdfma,45)
+		future.add_done_callback(self.callback_refreshbtnclick)
+	def callback_refreshbtnclick(self,future):
+		self.fundlist.clear()
+		items=self.fund.getitems()
+		__it=iter(items)
+		for item in __it :
+			__item=QListWidgetItem("{} {}".format(item,items[item]))
+			__item.data=item
+			self.fundlist.addItem(__item)
 class manipulate_panel(QWidget):
 	def __init__(self,fundmodel):
 		super(manipulate_panel, self).__init__()
@@ -64,7 +81,6 @@ class manipulate_panel(QWidget):
 			self.fund.grabnetv(fundcode)
 		self.fundcodeedit.clear()
 		self.fundcodeedit.setFocus()
-		pass
 class MainUI(QWidget):
 	def __init__(self):
 		super(MainUI, self).__init__()
@@ -78,7 +94,6 @@ class MainUI(QWidget):
 		self.manipulatepanel=manipulate_panel(self.fund)
 		self.vboxlayout.addWidget(self.manipulatepanel)
 		self.setLayout(self.vboxlayout)
-
 
 if __name__ == '__main__':
 	app=QApplication([])
