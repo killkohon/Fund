@@ -262,10 +262,10 @@ class fundnetv:
 		fitting=pf.calc(x_axis)
 		
 		dpf=netv-fitting
-		sfitting=self.movingaverage(dpf,window)
+		#sfitting=self.movingaverage(dpf,window)
 		cdf=stats.norm.cdf((madv-np.mean(madv))/np.std(madv))
 		cdf2=stats.norm.cdf((dv-np.mean(dv))/np.std(dv))
-		cdf3=stats.norm.cdf((sfitting-np.mean(sfitting))/np.std(sfitting))
+		cdf3=self.movingaverage(stats.norm.cdf((dpf-np.mean(dpf))/np.std(dpf)))
 		p1=figure.add_subplot(3,1,1)
 		p2=figure.add_subplot(3,1,2)
 		p3=figure.add_subplot(3,1,3)
