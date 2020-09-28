@@ -254,6 +254,7 @@ class fundnetv:
 		madv=self.movingaverage(dv,window)
 		if figure == None :
 			figure=plt.figure()
+		figure.subplots_adjust(left=0.05,right=0.99,wspace=0.2, hspace=0.2, bottom=0.1)
 		figure.suptitle("{} {} {}".format(tickcode,self.fundname(tickcode),lastdate))
 		x_axis=np.linspace(1,netv.size,netv.size)
 
@@ -270,7 +271,6 @@ class fundnetv:
 		p1=figure.add_subplot(3,1,1)
 		p2=figure.add_subplot(3,1,2)
 		p3=figure.add_subplot(3,1,3)
-
 		p1.plot(x_axis,netv,label='netv[{}]'.format(round(netv[-1],3)))
 		p1.plot(x_axis,ma,label='ma[{}]'.format(round(ma[-1],3)))
 		p1.plot(x_axis,ca,label='cont. average[{}]'.format(round(ca[-1],3)))
