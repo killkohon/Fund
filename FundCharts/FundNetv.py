@@ -155,7 +155,7 @@ class fundnetv:
 	def callback_grabnetv(self,future):
 		pass
 	def grabnetv(self,tickcode):
-		nextdate='2019-06-01'
+		nextdate='2018-07-01'
 		__isnewfund=True
 		try:
 			conn= self.PooL.connection()
@@ -209,7 +209,7 @@ class fundnetv:
 		finally:
 			cursor.close()
 			conn.close()
-	def loadnetv(self,tickcode,count=300):
+	def loadnetv(self,tickcode,count=500):
 		try:
 			conn=self.PooL.connection()
 			cursor=conn.cursor()
@@ -285,9 +285,9 @@ class fundnetv:
 		p1.grid()
 		p2.grid()
 		p3.grid()
-		p1.legend()
-		p2.legend()
-		p3.legend()
+		p1.legend(loc=2)
+		p2.legend(loc=2)
+		p3.legend(loc=2)
 	def showdata(self,tickcode,window=45):
 		df=self.loadnetv(tickcode)
 		netv=df['unfixedvalue'].values.astype(float)
