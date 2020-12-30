@@ -25,5 +25,9 @@ class polyfit:
 		for i in range(self.degree):
 			A = np.hstack([A,(x**(i+1)).reshape((m,1))])
 		self.params = solve(np.dot(A.T,A),np.dot(A.T,y.T))
-
+	def gradient(self,x):
+		dat=x.copy()
+		for e in np.nditer(dat,op_flags=['readwrite']):
+			e[...]=self.params[1]+2*self.params[2]*e+3*self.params[3]*e**2
+		return dat
 

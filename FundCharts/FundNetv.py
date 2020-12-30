@@ -41,6 +41,7 @@ class fundnetv:
 			database = "./fund.db"
 			)
 		self.isopen = lambda x: x.find("开放")>=0
+		self.currentfund = None
 		self.fundnames={}
 		self.threadPool=ThreadPoolExecutor(max_workers=5, thread_name_prefix="thread_")
 	def replacenan(self,x,y):
@@ -273,10 +274,11 @@ class fundnetv:
 		figure.suptitle("{} {} {}".format(tickcode,self.fundname(tickcode),lastdate))
 		x_axis=np.linspace(1,netv.size,netv.size)
 
+
 		pf=polyfit.polyfit()
 		pf.fitting(x_axis,netv)
 		fitting=pf.calc(x_axis)
-		
+		gradient=pf.gradient(x_axis)
 		dpf=netv-fitting
 		#sfitting=self.movingaverage(dpf,window)
 		cdf=stats.norm.cdf((madv-np.mean(madv))/np.std(madv))
@@ -290,6 +292,7 @@ class fundnetv:
 		p1.plot(x_axis,ma,label='ma[{}]'.format(round(ma[-1],3)))
 		p1.plot(x_axis,ca,label='cont. average[{}]'.format(round(ca[-1],3)))
 		p1.plot(x_axis,fitting,label='fit')
+		p1.plot(x_axis,np.min(netv)+(np.max(netv)-np.min(netv))*(gradient-np.min(gradient))/(np.max(gradient)-np.min(gradient)),label='grad[{}]'.format(round(gradient[-1],3)))
 		p2.plot(x_axis,dv,label='dv(netv-ma)')
 		p2.plot(x_axis,madv,label='madv')
 		p3.plot(x_axis,(netv-np.min(netv))/(np.max(netv)-np.min(netv)),label='reg. netv')
@@ -315,6 +318,7 @@ class fundnetv:
 		pf=polyfit()
 		pf.fitting(x_axis,netv)
 		fitting=pf.calc(x_axis)
+		gradient=pf.gradient(x_axis)
 		cdf=stats.norm.cdf((sadv-np.mean(sadv))/np.std(sadv))
 		cdf2=stats.norm.cdf((dv-np.mean(dv))/np.std(dv))
 		print("{} \t {}".format(tickcode,self.fundname(tickcode)))
@@ -322,6 +326,7 @@ class fundnetv:
 		print(" FV: {}".format(val[-10:]))
 		print(" SA: {}".format(sa[-10:]))
 		print("FIT: {}".format(fitting[-10:]))
+		print("Grad: {}").format(gradient[-10:])
 		print("CDF: {}".format(cdf[-10:]))
 		print("CDF(sadv): {}".format(cdf2[-10:]))
 	def showvalue(self,tickcode,window=45):
@@ -363,10 +368,12 @@ class fundnetv:
 		pf.fitting(x_axis,netv)
 		x_axis2=np.linspace(1,netv.size+predict,netv.size+predict)
 		fitting=pf.calc(x_axis2)
+		gradient=pf.gradient(x_axis2)
 		fig=plt.figure()
 		p1=fig.add_subplot(1,1,1)
 		p1.plot(x_axis,netv)
 		p1.plot(x_axis2,fitting)
+		p1.plot(x_axis2,gradient)
 		p1.grid()
 		fig.show()
 	def showall(self):

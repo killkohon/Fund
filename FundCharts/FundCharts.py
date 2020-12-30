@@ -1,7 +1,8 @@
 import FundNetv
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush,QColor
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QHBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton, QListWidgetItem, QGridLayout, QListWidget, QLineEdit
+from PyQt5.QtWidgets import *
+#from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QHBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton, QListWidgetItem, QGridLayout, QListWidget, QLineEdit
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import sys
 import matplotlib.pyplot as plt
@@ -42,6 +43,7 @@ class FundChart(QWidget):
 		self.setLayout(self.gridlayout)
 	def selectItem(self,obj):
 		self.figure.clf()
+		self.fund.currentfund=obj.data
 		self.fund.showfigure(obj.data,figure=self.figure)
 		self.canvas.draw()
 	def refreshbtnclick(self):
@@ -74,10 +76,13 @@ class manipulate_panel(QWidget):
 		self.grabbtn.clicked.connect(self.grabbtnclick)
 		self.grabnetvbtn=QPushButton("AddFund")
 		self.grabnetvbtn.setMaximumWidth(100)
+		self.holdingChkbox=QCheckBox("holding",self)
+		self.holdingChkbox.stateChanged.connect(self.holdingchkboxClick)
 		self.grabnetvbtn.clicked.connect(self.grabnetvbtnclick)
 		self.hboxlayout.addWidget(self.fundcodeedit,alignment=Qt.AlignLeft)
 		self.hboxlayout.addWidget(self.grabnetvbtn,alignment=Qt.AlignLeft)
 		self.hboxlayout.addWidget(self.grabbtn,alignment=Qt.AlignLeft)
+		self.hboxlayout.addWidget(self.holdingChkbox,alignment=Qt.AlignLeft)
 		self.setLayout(self.hboxlayout)
 	def grabbtnclick(self):
 		self.fund.grabfromdb()
@@ -88,6 +93,13 @@ class manipulate_panel(QWidget):
 			self.fund.grabnetv(fundcode)
 		self.fundcodeedit.clear()
 		self.fundcodeedit.setFocus()
+	def holdingchkboxClick(self,state):
+		if state == Qt.Checked:
+			print("checked-{}".format(self.fund.currentfund))
+			self.fund.setholding(self.fund.currentfund,True)
+		else:
+			print("unchecked-{}".format(self.fund.currentfund))
+			self.fund.setholding(self.fund.currentfund,False)
 class MainUI(QWidget):
 	def __init__(self):
 		super(MainUI, self).__init__()
