@@ -154,6 +154,21 @@ class fundnetv:
 			conn.close()
 	def callback_grabnetv(self,future):
 		pass
+	def setholding(self,tickcode,hold=True):
+		try:
+			conn= self.PooL.connection()
+			cursor=conn.cursor()
+			if hold:
+				cursor.execute("update fund_meta set holding=1 where fundcode='{}'".format(tickcode))
+			else:
+				cursor.execute("update fund_meta set holding=0 where fundcode='{}'".format(tickcode))
+			conn.commit()
+		except Exception as ex :
+			print("except at setholding({})".format(tickcode))
+			print(ex)
+		finally:
+			cursor.close()
+			conn.close()
 	def grabnetv(self,tickcode):
 		nextdate='2018-07-01'
 		__isnewfund=True
@@ -376,11 +391,11 @@ class fundnetv:
 		try:
 			conn=self.PooL.connection()
 			cursor=conn.cursor()
-			cursor.execute("select fundcode,fundname from fund_meta order by cdfma,fundcode")
+			cursor.execute("select fundcode,fundname,holding from fund_meta order by cdfma,fundcode")
 			__result=cursor.fetchone()
 			while __result is not None:
 				self.fundnames[__result[0]]=__result[1]
-				items[__result[0]]=__result[1]
+				items[__result[0]]=(__result[1],__result[2])
 				__result=cursor.fetchone()
 		except Exception as ex :
 			print(ex)

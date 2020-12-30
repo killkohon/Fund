@@ -1,5 +1,6 @@
 import FundNetv
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QBrush,QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QHBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton, QListWidgetItem, QGridLayout, QListWidget, QLineEdit
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import sys
@@ -18,11 +19,15 @@ class FundChart(QWidget):
 		self.fundlist=QListWidget(self)
 		self.fundlist.setMinimumWidth(240)
 		self.fundlist.setMaximumWidth(240)
+		self.highlightbrush=QBrush(Qt.SolidPattern)
+		self.highlightbrush.setColor(QColor("cyan"))
 		items=self.fund.getitems()
 		__it=iter(items)
 		for item in __it :
-			__item=QListWidgetItem("{} {}".format(item,items[item]))
+			__item=QListWidgetItem("{} {}".format(item,items[item][0]))
 			__item.data=item
+			if items[item][1]==1:
+				__item.setBackground(self.highlightbrush)
 			self.fundlist.addItem(__item)
 		self.fundlist.itemClicked.connect(self.selectItem)
 		self.gridlayout.addWidget(self.fundlist,1,0)
@@ -47,8 +52,10 @@ class FundChart(QWidget):
 		items=self.fund.getitems()
 		__it=iter(items)
 		for item in __it :
-			__item=QListWidgetItem("{} {}".format(item,items[item]))
+			__item=QListWidgetItem("{} {}".format(item,items[item][0]))
 			__item.data=item
+			if items[item][1]==1:
+				__item.setBackground(self.highlightbrush)
 			self.fundlist.addItem(__item)
 class manipulate_panel(QWidget):
 	def __init__(self,fundmodel):
