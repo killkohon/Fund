@@ -171,7 +171,7 @@ class fundnetv:
 			cursor.close()
 			conn.close()
 	def grabnetv(self,tickcode):
-		nextdate='2018-07-01'
+		nextdate='2018-10-01'
 		__isnewfund=True
 		try:
 			conn= self.PooL.connection()
