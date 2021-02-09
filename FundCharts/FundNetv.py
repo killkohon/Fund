@@ -7,11 +7,11 @@ import requests
 import pandas as pd 
 import numpy as np 
 import sqlite3
-from DBUtils.PersistentDB import PersistentDB
+from dbutils.persistent_db import PersistentDB
 import matplotlib.pyplot as plt
 from scipy import stats
 from numpy.linalg import solve
-import urllib.parse 
+import urllib3 
 import json
 import sys
 import polyfit
@@ -72,6 +72,7 @@ class fundnetv:
 		endDate = dt.datetime.strptime(startDate, "%Y-%m-%d") + dt.timedelta(days)
 		url = "http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}&sdate={}&edate={}&per={}".format(tickCode,startDate, endDate,days)
 		response = requests.get(url)
+		#print("get {}".format(url))
 		soup = BeautifulSoup(response.content, "lxml")
 		df = pd.DataFrame()
 		table_heads = []
@@ -292,7 +293,7 @@ class fundnetv:
 		p1.plot(x_axis,ma,label='ma[{}]'.format(round(ma[-1],3)))
 		p1.plot(x_axis,ca,label='cont. average[{}]'.format(round(ca[-1],3)))
 		p1.plot(x_axis,fitting,label='fit')
-		p1.plot(x_axis,np.min(netv)+(np.max(netv)-np.min(netv))*(gradient-np.min(gradient))/(np.max(gradient)-np.min(gradient)),label='grad[{}]'.format(round(gradient[-1],3)))
+		p1.plot(x_axis,np.min(netv)+(np.max(netv)-np.min(netv))*(gradient-np.min(gradient))/(np.max(gradient)-np.min(gradient)),label='grad[{}]'.format(round(gradient[-1],6)))
 		p2.plot(x_axis,dv,label='dv(netv-ma)')
 		p2.plot(x_axis,madv,label='madv')
 		p3.plot(x_axis,(netv-np.min(netv))/(np.max(netv)-np.min(netv)),label='reg. netv')

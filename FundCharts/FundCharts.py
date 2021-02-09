@@ -7,6 +7,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import sys
 import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
+import datetime as dt
 
 class FundChart(QWidget):
 	def __init__(self,fundmodel):
@@ -59,6 +60,7 @@ class FundChart(QWidget):
 			if items[item][1]==1:
 				__item.setBackground(self.highlightbrush)
 			self.fundlist.addItem(__item)
+		print("Refreshed at {}".format(dt.datetime.now()))
 class manipulate_panel(QWidget):
 	def __init__(self,fundmodel):
 		super(manipulate_panel, self).__init__()
