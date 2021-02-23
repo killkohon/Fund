@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from numpy.linalg import solve
 import urllib3 
+import urllib.parse 
 import json
 import sys
 import polyfit
