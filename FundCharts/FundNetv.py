@@ -272,7 +272,7 @@ class fundnetv:
 		madv=self.movingaverage(dv,window)
 		if figure == None :
 			figure=plt.figure()
-		figure.subplots_adjust(left=0.05,right=0.99,wspace=0.2, hspace=0.2, bottom=0.1)
+		figure.subplots_adjust(left=0.03,right=0.99,wspace=0.05, hspace=0.05, bottom=0.05,top=0.95)
 		figure.suptitle("{} {} {}".format(tickcode,self.fundname(tickcode),lastdate))
 		x_axis=np.linspace(1,netv.size,netv.size)
 
@@ -287,6 +287,14 @@ class fundnetv:
 		cdf2=stats.norm.cdf((dv-np.mean(dv))/np.std(dv))
 		cdf3=self.movingaverage(stats.norm.cdf((dpf-np.mean(dpf))/np.std(dpf)))
 		cdf4=self.movingaverage(stats.norm.cdf((dv-np.mean(dv))/np.std(dv)))
+		#逐日计cdf
+		cdf5=[]
+		for i in range(2,len(madv)):
+			cdf5.append(stats.norm.cdf((madv[:-(len(madv)-i)]-np.mean(madv[:-(len(madv)-i)]))/np.std(madv[:-(len(madv)-i)]))[-1])
+		__temp=cdf5[0]
+		cdf5.insert(0,__temp)
+		cdf5.insert(0,__temp)
+
 		p1=figure.add_subplot(3,1,1)
 		p2=figure.add_subplot(3,1,2)
 		p3=figure.add_subplot(3,1,3)
@@ -298,10 +306,13 @@ class fundnetv:
 		p2.plot(x_axis,dv,label='dv(netv-ma)')
 		p2.plot(x_axis,madv,label='madv')
 		p3.plot(x_axis,(netv-np.min(netv))/(np.max(netv)-np.min(netv)),label='reg. netv')
-		p3.plot(x_axis,cdf,label='CDF(madv)[{}]'.format(round(cdf[-1],2)))
+		p3.plot(x_axis,cdf,label='CDF(madv)[{}]'.format(round(cdf[-1],4)))
+
 		p3.plot(x_axis,cdf2,label='CDF(dv)[{}]'.format(round(cdf2[-1],2)))
 		p3.plot(x_axis,cdf3,label='CDF(safit)[{}]'.format(round(cdf3[-1],2)))
 		p3.plot(x_axis,cdf4,label='MA(cdfdv)[{}]'.format(round(cdf4[-1],2)))
+		p3.plot(x_axis,cdf5,label='CDFp(madv)[{}]'.format(round(cdf5[-1],4)))
+		
 		p1.grid()
 		p2.grid()
 		p3.grid()
