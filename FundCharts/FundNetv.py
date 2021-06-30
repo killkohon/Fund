@@ -18,8 +18,6 @@ import sys
 import polyfit
 from concurrent.futures import ThreadPoolExecutor
 
-
-#plt.rcParams['font.sans-serif']=['SimHei']
 plt.rcParams['font.sans-serif']=['KaiTi']
 plt.rcParams['font.serif'] = ['KaiTi']
 plt.rcParams['axes.unicode_minus']=False
@@ -319,6 +317,7 @@ class fundnetv:
 		p1.legend(loc=2)
 		p2.legend(loc=2)
 		p3.legend(loc=2)
+  
 	def showdata(self,tickcode,window=45):
 		df=self.loadnetv(tickcode)
 		netv=df['unfixedvalue'].values.astype(float)
