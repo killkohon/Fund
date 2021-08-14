@@ -71,7 +71,6 @@ class fundnetv:
 		endDate = dt.datetime.strptime(startDate, "%Y-%m-%d") + dt.timedelta(days)
 		url = "http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}&sdate={}&edate={}&per={}".format(tickCode,startDate, endDate,days)
 		response = requests.get(url)
-		#print("get {}".format(url))
 		soup = BeautifulSoup(response.content, "lxml")
 		df = pd.DataFrame()
 		table_heads = []
@@ -299,7 +298,7 @@ class fundnetv:
 		p1.plot(x_axis,netv,label='netv[{}]'.format(round(netv[-1],3)))
 		p1.plot(x_axis,ma,label='ma[{}]'.format(round(ma[-1],3)))
 		p1.plot(x_axis,ca,label='cont. average[{}]'.format(round(ca[-1],3)))
-		p1.plot(x_axis,fitting,label='fit')
+		p1.plot(x_axis,fitting,label='fit[{}]'.format(round(fitting[-1],4)))
 		p1.plot(x_axis,np.min(netv)+(np.max(netv)-np.min(netv))*(gradient-np.min(gradient))/(np.max(gradient)-np.min(gradient)),label='grad[{}]'.format(round(gradient[-1],6)))
 		p2.plot(x_axis,dv,label='dv(netv-ma)')
 		p2.plot(x_axis,madv,label='madv')
@@ -454,3 +453,10 @@ class fundnetv:
 			cursor.close()
 			conn.close()
 
+#计算delays阶以内的自相关系数，返回delays个值，分别计算序列均值，标准差
+def autocorrelation(x,delays=1):
+	n = len(x)
+	x = np.array(x)
+	result = [np.correlate(x[i:]-x[i:].mean(),x[:n-i]-x[:n-i].mean())[0]\
+		/(x[i:].std()*x[:n-i].std()*(n-i)) for i in range(1,delays+1)]
+	return result

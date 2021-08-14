@@ -9,8 +9,8 @@ class ParameterException(Exception):
 		return repr(self.value)
 
 class polyfit:
-	def __init__(self):
-		self.degree=3
+	def __init__(self,rank=3):
+		self.degree=rank
 		self.params=np.zeros(self.degree+1,dtype=float)
 	def calc(self,x):
 		dat=x.copy()
