@@ -404,12 +404,20 @@ class fundnetv:
 		finally:
 			cursor.close()
 			conn.close()		
-	def getitems(self):
+	def getitems(self,sorttype=1):
 		items={}
 		try:
 			conn=self.PooL.connection()
 			cursor=conn.cursor()
-			cursor.execute("select fundcode,fundname,holding from fund_meta order by cdfma,fundcode")
+			if sorttype == 1 :
+				sql="select fundcode,fundname,holding from fund_meta order by cdfma,fundcode"
+			elif sorttype == 2 :
+				sql="select fundcode,fundname,holding from fund_meta order by fundname,fundcode"
+			elif sorttype == 3 :
+				sql="select fundcode,fundname,holding from fund_meta order by fundcode"
+			else:
+				sql="select fundcode,fundname,holding from fund_meta order by cdfma,fundcode"
+			cursor.execute(sql)
 			__result=cursor.fetchone()
 			while __result is not None:
 				self.fundnames[__result[0]]=__result[1]

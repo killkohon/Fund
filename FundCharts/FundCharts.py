@@ -23,7 +23,7 @@ class FundChart(QWidget):
 		self.fundlist.setMaximumWidth(240)
 		self.highlightbrush=QBrush(Qt.SolidPattern)
 		self.highlightbrush.setColor(QColor("cyan"))
-		items=self.fund.getitems()
+		items=self.fund.getitems(3)
 		__it=iter(items)
 		for item in __it :
 			__item=QListWidgetItem("{} {}".format(item,items[item][0]))
@@ -33,13 +33,31 @@ class FundChart(QWidget):
 			self.fundlist.addItem(__item)
 		self.fundlist.itemClicked.connect(self.selectItem)
 		self.gridlayout.addWidget(self.fundlist,1,0)
+
+		self.btnWidget=QWidget()
+		btnGridlayout=QGridLayout()
+		btnGridlayout.setSpacing(5)
+
 		self.refreshbtn=QPushButton("Refresh")
-		self.refreshbtn.setMaximumWidth(100)
+		self.refreshbtn.setMaximumWidth(60)
 		self.refreshbtn.clicked.connect(self.refreshbtnclick)
-		self.gridlayout.addWidget(self.refreshbtn,2,0)
+
+		self.sortByNamebtn=QPushButton("ByName")
+		self.sortByNamebtn.setMaximumWidth(60)
+		self.sortByNamebtn.clicked.connect(self.sortByNamebtnclick)
+
+		self.sortByCodebtn=QPushButton("ByCode")
+		self.sortByCodebtn.setMaximumWidth(60)
+		self.sortByCodebtn.clicked.connect(self.sortByCodebtnclick)
+
+		btnGridlayout.addWidget(self.refreshbtn,1,0)
+		btnGridlayout.addWidget(self.sortByNamebtn,1,1)
+		btnGridlayout.addWidget(self.sortByCodebtn,1,2)
+		self.btnWidget.setLayout(btnGridlayout)
+		self.gridlayout.addWidget(self.btnWidget,2,0)
 		self.figure=plt.figure()
 		self.canvas=FigureCanvas(self.figure)
-		self.gridlayout.addWidget(self.canvas,1,1,2,1)
+		self.gridlayout.addWidget(self.canvas,1,1)
 		self.canvas.draw()
 		self.setLayout(self.gridlayout)
 	def selectItem(self,obj):
@@ -52,7 +70,7 @@ class FundChart(QWidget):
 		future.add_done_callback(self.callback_refreshbtnclick)
 	def callback_refreshbtnclick(self,future):
 		self.fundlist.clear()
-		items=self.fund.getitems()
+		items=self.fund.getitems(1)
 		__it=iter(items)
 		for item in __it :
 			__item=QListWidgetItem("{} {}".format(item,items[item][0]))
@@ -61,6 +79,26 @@ class FundChart(QWidget):
 				__item.setBackground(self.highlightbrush)
 			self.fundlist.addItem(__item)
 		print("Refreshed at {}".format(dt.datetime.now()))
+	def sortByNamebtnclick(self):
+		self.fundlist.clear()
+		items=self.fund.getitems(2)
+		__it=iter(items)
+		for item in __it :
+			__item=QListWidgetItem("{} {}".format(item,items[item][0]))
+			__item.data=item
+			if items[item][1]==1:
+				__item.setBackground(self.highlightbrush)
+			self.fundlist.addItem(__item)
+	def sortByCodebtnclick(self):
+		self.fundlist.clear()
+		items=self.fund.getitems(3)
+		__it=iter(items)
+		for item in __it :
+			__item=QListWidgetItem("{} {}".format(item,items[item][0]))
+			__item.data=item
+			if items[item][1]==1:
+				__item.setBackground(self.highlightbrush)
+			self.fundlist.addItem(__item)
 class manipulate_panel(QWidget):
 	def __init__(self,fundmodel):
 		super(manipulate_panel, self).__init__()
