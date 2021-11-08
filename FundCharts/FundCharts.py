@@ -1,9 +1,9 @@
 import FundNetv
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QBrush,QColor
-from PyQt5.QtWidgets import *
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QBrush,QColor
+from PyQt6.QtWidgets import *
 #from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QHBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton, QListWidgetItem, QGridLayout, QListWidget, QLineEdit
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt6agg import FigureCanvasQTAgg as FigureCanvas
 import sys
 import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
@@ -21,7 +21,7 @@ class FundChart(QWidget):
 		self.fundlist=QListWidget(self)
 		self.fundlist.setMinimumWidth(240)
 		self.fundlist.setMaximumWidth(240)
-		self.highlightbrush=QBrush(Qt.SolidPattern)
+		self.highlightbrush=QBrush(Qt.BrushStyle.SolidPattern)
 		self.highlightbrush.setColor(QColor("cyan"))
 		items=self.fund.getitems(3)
 		__it=iter(items)
