@@ -170,7 +170,13 @@ class fundnetv:
 			cursor.close()
 			conn.close()
 	def grabnetv(self,tickcode):
-		nextdate='2018-10-01'
+		try:
+			self.threadPool.submit(self._grabnetv,tickcode)
+		except Exception as ex :
+			print("except at grabnetv")
+			print(ex)
+	def _grabnetv(self,tickcode):
+		nextdate='2019-06-01'
 		__isnewfund=True
 		try:
 			conn= self.PooL.connection()
@@ -188,7 +194,6 @@ class fundnetv:
 			conn.close()
 		GoAhead= True
 		while GoAhead:
-			#print("Next date: {}".format(nextdate))
 			df=self.fund_in_days(tickcode,nextdate,8)
 			data=df.values
 			if (np.shape(data)[0]>0):
