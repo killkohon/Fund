@@ -1,0 +1,6 @@
+import numpy as np
+import nn2
+nn=nn2.neuralnetwork([3,5,6,2])
+nn.fit(np.array([[2,3,1]]),np.array([[1,2]]))
+
+
