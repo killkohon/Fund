@@ -78,7 +78,7 @@ class neuralnetwork:
 				print("Opertors="+str(Operators))
 			#修正权重
 			for j in range(0,len(self.weights)):
-				self.weights[j]=self.weights[j]+self.rate*Operators[j]
+				self.weights[j]=self.weights[j]-self.rate*Operators[j]
 			print("weights="+str(self.weights))
 	def predict(self,x):
 		x=np.array(x)
