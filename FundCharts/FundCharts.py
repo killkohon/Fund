@@ -12,7 +12,7 @@ import datetime as dt
 class FundChart(QWidget):
     def __init__(self, fundmodel):
         super(FundChart, self).__init__()
-        self.threadPool = ThreadPoolExecutor(max_workers=5, thread_name_prefix="thread_")
+        self.threadPool = ThreadPoolExecutor(max_workers=6, thread_name_prefix="Qthread_")
         self.fund = fundmodel
         self.initUI()
 

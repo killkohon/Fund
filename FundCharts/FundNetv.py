@@ -35,7 +35,7 @@ class fundnetv:
     def __init__(self):
         self.PooL = PersistentDB(
             creator=sqlite3,  # 使用链接数据库的模块
-            maxusage=None,  # 一个链接最多被使用的次数，None表示无限制
+            maxusage=1000,  # 一个链接最多被使用的次数，None表示无限制
             setsession=[],  # 开始会话前执行的命令
             ping=0,  # ping MySQL服务端,检查服务是否可用
             closeable=False,  # conn.close()实际上被忽略，供下次使用，直到线程关闭，自动关闭链接，而等于True时，conn.close()真的被关闭
@@ -45,7 +45,7 @@ class fundnetv:
         self.isopen = lambda x: x.find("开放") >= 0
         self.currentfund = None
         self.fundnames = {}
-        self.threadPool = ThreadPoolExecutor(max_workers=5, thread_name_prefix="thread_")
+        self.threadPool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="thread_")
 
     @staticmethod
     def replacenan(x, y):
@@ -73,15 +73,16 @@ class fundnetv:
             finally:
                 cursor.close()
                 conn.close()
-
-    @staticmethod
-    def fund_in_days(tickCode, startDate, days):
+    def fund_in_days(self, tickCode, startDate, days):
         endDate = dt.datetime.strptime(startDate, "%Y-%m-%d") + dt.timedelta(days)
         url = "http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}&sdate={}&edate={}&per={}".format(
             tickCode, startDate, endDate, days)
-        response = requests.get(url)
-        soup = BeautifulSoup(response.content, "lxml")
+        response = requests.get(url,timeout=15)
         df = pd.DataFrame()
+        if response.ok == False :
+            print("response {} failed.".format(tickCode))
+            return df
+        soup = BeautifulSoup(response.content, "lxml")
         table_heads = []
         for head in soup.findAll("th"):
             table_heads.append(head.contents[0])
@@ -104,14 +105,12 @@ class fundnetv:
         for col, col_name in enumerate(table_heads):
             df[col_name] = table_rows[:, col]
         return df
-
     def grabmeta(self, tickcode):
         url = "https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?callback=&m=1&key={}".format(
             tickcode)
-        response = requests.get(url)
+        response = requests.get(url,timeout=5)
         meta = json.loads(urllib.parse.unquote(response.content.decode()))
         return tickcode, meta
-
     def savemeta(self, tickcode, name, category, categoryname, company, manager):
         try:
             conn = self.PooL.connection()
@@ -128,7 +127,6 @@ class fundnetv:
         finally:
             cursor.close()
             conn.close()
-
     def grabmetafromdb(self):
         try:
             conn = self.PooL.connection()
@@ -150,7 +148,6 @@ class fundnetv:
         finally:
             cursor.close()
             conn.close()
-
     def grabfromdb(self):
         try:
             conn = self.PooL.connection()
@@ -168,10 +165,8 @@ class fundnetv:
         finally:
             cursor.close()
             conn.close()
-
     def callback_grabnetv(self, future):
         pass
-
     def setholding(self, tickcode, hold=True):
         try:
             conn = self.PooL.connection()
@@ -187,7 +182,6 @@ class fundnetv:
         finally:
             cursor.close()
             conn.close()
-
     def grabnetv(self, tickcode):
         try:
             self.threadPool.submit(self._grabnetv, tickcode)
@@ -214,7 +208,7 @@ class fundnetv:
             conn.close()
         GoAhead = True
         while GoAhead:
-            df = self.fund_in_days(tickcode, nextdate, 8)
+            df = self.fund_in_days(tickcode, nextdate, 10)
             data = df.values
             if (np.shape(data)[0] > 0):
                 row = np.shape(data)[0] - 1
@@ -226,8 +220,8 @@ class fundnetv:
                 nextdate = (dt.datetime.strptime(data[0][0], "%Y-%m-%d") + dt.timedelta(1)).__format__("%Y-%m-%d")
             else:
                 __tempdate = dt.datetime.strptime(nextdate, "%Y-%m-%d")
-                if __tempdate.__lt__(dt.datetime.now() - dt.timedelta(7)):
-                    nextdate = (__tempdate + dt.timedelta(7)).__format__("%Y-%m-%d")
+                if __tempdate.__lt__(dt.datetime.now() - dt.timedelta(9)):
+                    nextdate = (__tempdate + dt.timedelta(9)).__format__("%Y-%m-%d")
                 else:
                     GoAhead = False
         # 拉取元数据
