@@ -81,6 +81,7 @@ class fundnetv:
         df = pd.DataFrame()
         if response.ok == False :
             print("response {} failed.".format(tickCode))
+            time.sleep(5)
             return df
         soup = BeautifulSoup(response.content, "lxml")
         table_heads = []
@@ -116,7 +117,7 @@ class fundnetv:
             conn = self.PooL.connection()
             cursor = conn.cursor()
             data = (tickcode, name, category, categoryname, company, manager)
-            print("To save:{}".format(data))
+            print("Save:{}".format(data))
             cursor.execute(
                 "insert into fund_meta(fundcode,fundname,category,categoryname,company,manager)values('%s','%s','%s','%s','%s','%s')" % data)
             result = cursor.fetchall()
@@ -209,21 +210,24 @@ class fundnetv:
         GoAhead = True
         while GoAhead:
             df = self.fund_in_days(tickcode, nextdate, 10)
-            data = df.values
-            if (np.shape(data)[0] > 0):
-                row = np.shape(data)[0] - 1
-                while row >= 0:
-                    self.savedata(tickcode, data[row][0], float(data[row][1]), float(data[row][2]),
-                                  buyable=self.isopen(data[row][4]), salable=self.isopen(data[row][5]),
-                                  dividend=data[row][6])
-                    row -= 1
-                nextdate = (dt.datetime.strptime(data[0][0], "%Y-%m-%d") + dt.timedelta(1)).__format__("%Y-%m-%d")
+            if df.empty:
+                GoAhead = False
             else:
-                __tempdate = dt.datetime.strptime(nextdate, "%Y-%m-%d")
-                if __tempdate.__lt__(dt.datetime.now() - dt.timedelta(9)):
-                    nextdate = (__tempdate + dt.timedelta(9)).__format__("%Y-%m-%d")
+                data = df.values
+                if (np.shape(data)[0] > 0):
+                    row = np.shape(data)[0] - 1
+                    while row >= 0:
+                        self.savedata(tickcode, data[row][0], float(data[row][1]), float(data[row][2]),
+                                      buyable=self.isopen(data[row][4]), salable=self.isopen(data[row][5]),
+                                      dividend=data[row][6])
+                        row -= 1
+                    nextdate = (dt.datetime.strptime(data[0][0], "%Y-%m-%d") + dt.timedelta(1)).__format__("%Y-%m-%d")
                 else:
-                    GoAhead = False
+                    __tempdate = dt.datetime.strptime(nextdate, "%Y-%m-%d")
+                    if __tempdate.__lt__(dt.datetime.now() - dt.timedelta(9)):
+                        nextdate = (__tempdate + dt.timedelta(9)).__format__("%Y-%m-%d")
+                    else:
+                        GoAhead = False
         # 拉取元数据
         if __isnewfund == True:
             code, meta = self.grabmeta(tickcode)
@@ -331,7 +335,7 @@ class fundnetv:
         p1.plot(x_axis, fitting, label='fit[{}]'.format(round(fitting[-1], 4)))
         p1.plot(x_axis, np.min(netv) + (np.max(netv) - np.min(netv)) * (gradient - np.min(gradient)) / (
                     np.max(gradient) - np.min(gradient)), label='grad[{}]'.format(round(gradient[-1], 6)))
-        p2.plot(x_axis, dv, label='dv(netv-ma)')
+        p2.plot(x_axis, dv, label='dv(netv-ma)[{},{},{},{},{}/{}/{}]'.format(round(np.max(dv),3),round(np.min(dv),3),round(np.mean(dv),3),round(np.std(dv),3),round(dv[-1],3),round(np.mean(dv)-np.std(dv),3),round(np.mean(dv)+np.std(dv),3)))
         p2.plot(x_axis, madv, label='madv')
         p3.plot(x_axis, (netv - np.min(netv)) / (np.max(netv) - np.min(netv)), label='reg. netv')
         p3.plot(x_axis, cdf, label='CDF(madv)[{}]'.format(round(cdf[-1], 4)))
@@ -345,7 +349,7 @@ class fundnetv:
         p2.grid()
         p3.grid()
         p1.legend(loc=2)
-        p2.legend(loc=2)
+        p2.legend(loc=4)
         p3.legend(loc=2)
 
     def showdata(self, tickcode, window=45):
