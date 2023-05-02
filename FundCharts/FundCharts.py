@@ -43,6 +43,10 @@ class FundChart(QWidget):
         self.refreshbtn.setMaximumWidth(60)
         self.refreshbtn.clicked.connect(self.refreshbtnclick)
 
+        self.diffbtn = QPushButton("ByDiff")
+        self.diffbtn.setMaximumWidth(60)
+        self.diffbtn.clicked.connect(self.diffbtnclick)
+
         self.sortByNamebtn = QPushButton("ByName")
         self.sortByNamebtn.setMaximumWidth(60)
         self.sortByNamebtn.clicked.connect(self.sortByNamebtnclick)
@@ -54,6 +58,7 @@ class FundChart(QWidget):
         btnGridlayout.addWidget(self.refreshbtn, 1, 0)
         btnGridlayout.addWidget(self.sortByNamebtn, 1, 1)
         btnGridlayout.addWidget(self.sortByCodebtn, 1, 2)
+        btnGridlayout.addWidget(self.diffbtn, 2, 0)
         self.btnWidget.setLayout(btnGridlayout)
         self.gridlayout.addWidget(self.btnWidget, 2, 0)
         self.figure = plt.figure()
@@ -68,9 +73,16 @@ class FundChart(QWidget):
         self.fund.showfigure(obj.data, figure=self.figure)
         self.canvas.draw()
 
+    
+
     def refreshbtnclick(self):
         future = self.threadPool.submit(self.fund.refreshcdfma, 45)
         future.add_done_callback(self.callback_refreshbtnclick)
+
+    def diffbtnclick(self):
+        print("Diff Clicked")
+        future = self.threadPool.submit(self.fund.updatestddiff, 45)
+        future.add_done_callback(self.callback_updatebtnclick)
 
     def callback_refreshbtnclick(self, future):
         self.fundlist.clear()
@@ -83,6 +95,18 @@ class FundChart(QWidget):
                 __item.setBackground(self.highlightbrush)
             self.fundlist.addItem(__item)
         print("Refreshed at {}".format(dt.datetime.now()))
+
+    def callback_updatebtnclick(self, future):
+        self.fundlist.clear()
+        items = self.fund.getitems(4)
+        __it = iter(items)
+        for item in __it:
+            __item = QListWidgetItem("{} {}".format(item, items[item][0]))
+            __item.data = item
+            if items[item][1] == 1:
+                __item.setBackground(self.highlightbrush)
+            self.fundlist.addItem(__item)
+        print("update std diff at {}".format(dt.datetime.now()))
 
     def sortByNamebtnclick(self):
         self.fundlist.clear()

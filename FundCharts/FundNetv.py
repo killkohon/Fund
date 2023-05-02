@@ -97,7 +97,7 @@ class fundnetv:
                     table_records.append(np.nan)
                 else:
                     if val[0] == "暂无数据!":
-                        print("暂无数据!")
+                        print("{}暂无数据!".format(tickCode))
                         return df
                     table_records.append(val[0])
             table_rows.append(table_records)
@@ -208,11 +208,13 @@ class fundnetv:
             cursor.close()
             conn.close()
         GoAhead = True
+        HasRecord = False
         while GoAhead:
             df = self.fund_in_days(tickcode, nextdate, 10)
             if df.empty:
                 GoAhead = False
             else:
+                HasRecord = True
                 data = df.values
                 if (np.shape(data)[0] > 0):
                     row = np.shape(data)[0] - 1
@@ -230,11 +232,11 @@ class fundnetv:
                         GoAhead = False
         # 拉取元数据
         if __isnewfund == True:
-            code, meta = self.grabmeta(tickcode)
-            for data in meta["Datas"]:
-                if (data["CATEGORY"] == 700 and data["CODE"] == code):
-                    self.savemeta(code, data["NAME"], data["CATEGORY"], data["CATEGORYDESC"],
-                                  data["FundBaseInfo"]["JJGS"], data["FundBaseInfo"]["JJJL"])
+            if HasRecord == True:
+                code, meta = self.grabmeta(tickcode)
+                for data in meta["Datas"]:
+                    if (data["CATEGORY"] == 700 and data["CODE"] == code):
+                        self.savemeta(code, data["NAME"], data["CATEGORY"], data["CATEGORYDESC"],data["FundBaseInfo"]["JJGS"], data["FundBaseInfo"]["JJJL"])
 
     def savedata(self, tickcode, valuedate, netv, unfixednetv, buyable=True, salable=True, dividend=""):
         try:
@@ -300,7 +302,14 @@ class fundnetv:
         ma = self.movingaverage(netv, window)
         ca = self.continousaverage(netv)
         dv = netv - ma
+        rangedv=np.max(dv)-np.min(dv)
         madv = self.movingaverage(dv, window)
+        dvstd=np.std(dv,ddof=1)
+        dvmean=np.mean(dv)
+        idxdv=(dv-dvmean)/dvstd
+        rateidxdv=(np.max(idxdv)-np.min(idxdv))/(np.max(dv)-np.min(dv))
+        lineidxdv=(np.min(idxdv)+(idxdv-np.min(idxdv)))/rateidxdv
+
         if figure == None:
             figure = plt.figure()
         figure.subplots_adjust(left=0.03, right=0.99, wspace=0.05, hspace=0.05, bottom=0.05, top=0.95)
@@ -335,8 +344,10 @@ class fundnetv:
         p1.plot(x_axis, fitting, label='fit[{}]'.format(round(fitting[-1], 4)))
         p1.plot(x_axis, np.min(netv) + (np.max(netv) - np.min(netv)) * (gradient - np.min(gradient)) / (
                     np.max(gradient) - np.min(gradient)), label='grad[{}]'.format(round(gradient[-1], 6)))
-        p2.plot(x_axis, dv, label='dv(netv-ma)[{},{},{},{},{}/{}/{}]'.format(round(np.max(dv),3),round(np.min(dv),3),round(np.mean(dv),3),round(np.std(dv),3),round(dv[-1],3),round(np.mean(dv)-np.std(dv),3),round(np.mean(dv)+np.std(dv),3)))
+        p2.plot(x_axis, dv, label='dv(netv-ma)[{},{},{},{}]'.format(round(np.max(dv),3),round(np.min(dv),3),round(np.mean(dv),3),round(dvstd,3)))
+        p2.plot(x_axis,lineidxdv,label='idxdv[{}<{}|{}>{}]'.format(round(dv[-1],3),round(np.mean(dv)-dvstd,3),round(np.mean(dv)+dvstd,3),round(idxdv[-1],3)))
         p2.plot(x_axis, madv, label='madv')
+
         p3.plot(x_axis, (netv - np.min(netv)) / (np.max(netv) - np.min(netv)), label='reg. netv')
         p3.plot(x_axis, cdf, label='CDF(madv)[{}]'.format(round(cdf[-1], 4)))
 
@@ -349,7 +360,7 @@ class fundnetv:
         p2.grid()
         p3.grid()
         p1.legend(loc=2)
-        p2.legend(loc=4)
+        p2.legend(loc=2)
         p3.legend(loc=2)
 
     def showdata(self, tickcode, window=45):
@@ -455,6 +466,8 @@ class fundnetv:
                 sql = "select fundcode,fundname,holding from fund_meta order by fundname,fundcode"
             elif sorttype == 3:
                 sql = "select fundcode,fundname,holding from fund_meta order by fundcode"
+            elif sorttype == 4:
+                sql = "select fundcode,fundname,holding from fund_meta order by stddiff,fundcode"
             else:
                 sql = "select fundcode,fundname,holding from fund_meta order by cdfma,fundcode"
             cursor.execute(sql)
@@ -494,7 +507,7 @@ class fundnetv:
                 cmd = "update fund_meta set cdfma={} where fundcode='{}'".format(cdf[-1], item)
                 cursor.execute(cmd)
                 count += 1
-                if (count % 10) == 0:
+                if (count % 20) == 0:
                     conn.commit()
             conn.commit()
         except Exception as ex:
@@ -504,6 +517,37 @@ class fundnetv:
             cursor.close()
             conn.close()
 
+    def callback_updatestddiff(self, future):
+        pass
+
+    def updatestddiff(self,window=45):
+        try:
+            conn = self.PooL.connection()
+            cursor = conn.cursor()
+            items = self.getitems()
+            __it = iter(items)
+            count = 0
+            for item in __it:
+                df = self.loadnetv(item)
+                netv = df['unfixedvalue'].values.astype(float)
+                ma = self.movingaverage(netv, window)
+                dv = netv - ma
+                dvstd=np.std(dv,ddof=1)
+                dvmean=np.mean(dv)
+                idxdv=(dv-dvmean)/dvstd
+                cmd = "update fund_meta set stddiff={} where fundcode='{}'".format(idxdv[-1], item)
+                cursor.execute(cmd)
+                count += 1
+                if (count % 20) == 0:
+                    conn.commit()
+            conn.commit()
+        except Exception as ex:
+            print("exception in stddiff")
+            print(ex)
+        finally:
+            cursor.close()
+            conn.close()
+        pass
 
 # 计算delays阶以内的自相关系数，返回delays个值，分别计算序列均值，标准差
 def autocorrelation(x, delays=1):
