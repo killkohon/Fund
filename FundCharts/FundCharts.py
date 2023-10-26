@@ -61,9 +61,19 @@ class FundChart(QWidget):
         btnGridlayout.addWidget(self.diffbtn, 2, 0)
         self.btnWidget.setLayout(btnGridlayout)
         self.gridlayout.addWidget(self.btnWidget, 2, 0)
+
+        self.tabs=QTabWidget()
+
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
-        self.gridlayout.addWidget(self.canvas, 1, 1)
+        self.tabs.addTab(self.canvas,"Charts")
+        self.svdfigure = plt.figure()
+        self.svdcanvs=FigureCanvas(self.svdfigure)
+        self.tabs.addTab(self.svdcanvs,"SVD")
+        self.predictfigure = plt.figure()
+        self.predictcanvas=FigureCanvas(self.predictfigure)
+        self.tabs.addTab(self.predictcanvas,"Predict")
+        self.gridlayout.addWidget(self.tabs, 1, 1)
         self.canvas.draw()
         self.setLayout(self.gridlayout)
 
@@ -72,8 +82,13 @@ class FundChart(QWidget):
         self.fund.currentfund = obj.data
         self.fund.showfigure(obj.data, figure=self.figure)
         self.canvas.draw()
+        self.svdfigure.clf()
+        self.fund.showSVDFigure(obj.data,figure=self.svdfigure)
+        self.svdcanvs.draw()
+        self.predictfigure.clf()
+        self.fund.showPredictFigure(obj.data,figure=self.predictfigure)
+        self.predictcanvas.draw()
 
-    
 
     def refreshbtnclick(self):
         future = self.threadPool.submit(self.fund.refreshcdfma, 45)
@@ -187,6 +202,7 @@ class MainUI(QWidget):
     def initUI(self):
         self.vboxlayout = QVBoxLayout()
         self.vboxlayout.setSpacing(5)
+        
         self.fundchart = FundChart(self.fund)
         self.vboxlayout.addWidget(self.fundchart)
         self.manipulatepanel = manipulate_panel(self.fund)

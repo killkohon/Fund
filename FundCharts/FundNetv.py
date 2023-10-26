@@ -5,6 +5,8 @@ import datetime as dt
 import json
 import sqlite3
 import urllib.parse
+import time
+import math
 from concurrent.futures import ThreadPoolExecutor
 
 import matplotlib.pyplot as plt
@@ -14,6 +16,7 @@ import requests
 from bs4 import BeautifulSoup
 from dbutils.persistent_db import PersistentDB
 from scipy import stats
+from scipy.linalg import hankel
 
 import polyfit
 
@@ -191,7 +194,7 @@ class fundnetv:
             print(ex)
 
     def _grabnetv(self, tickcode):
-        nextdate = '2019-06-01'
+        nextdate = '2020-01-01'
         __isnewfund = True
         try:
             conn = self.PooL.connection()
@@ -299,10 +302,11 @@ class fundnetv:
         df = self.loadnetv(tickcode)
         lastdate = df['vdate'].values[-1]
         netv = df['unfixedvalue'].values.astype(float)
+        netvmin=np.min(netv)
+        netvmax=np.max(netv)
         ma = self.movingaverage(netv, window)
         ca = self.continousaverage(netv)
         dv = netv - ma
-        rangedv=np.max(dv)-np.min(dv)
         madv = self.movingaverage(dv, window)
         dvstd=np.std(dv,ddof=1)
         dvmean=np.mean(dv)
@@ -335,15 +339,31 @@ class fundnetv:
         cdf5.insert(0, __temp)
         cdf5.insert(0, __temp)
 
-        p1 = figure.add_subplot(3, 1, 1)
-        p2 = figure.add_subplot(3, 1, 2)
-        p3 = figure.add_subplot(3, 1, 3)
+        p1 = figure.add_subplot(4, 2, (1,4))
+        p2 = figure.add_subplot(4, 2, (5,6))
+        p3 = figure.add_subplot(4, 2, (7,8))
         p1.plot(x_axis, netv, label='netv[{}]'.format(round(netv[-1], 3)))
+        
         p1.plot(x_axis, ma, label='ma[{}]'.format(round(ma[-1], 3)))
         p1.plot(x_axis, ca, label='cont. average[{}]'.format(round(ca[-1], 3)))
         p1.plot(x_axis, fitting, label='fit[{}]'.format(round(fitting[-1], 4)))
         p1.plot(x_axis, np.min(netv) + (np.max(netv) - np.min(netv)) * (gradient - np.min(gradient)) / (
                     np.max(gradient) - np.min(gradient)), label='grad[{}]'.format(round(gradient[-1], 6)))
+        #SVD分解
+        row=math.ceil(netv.size/2)
+        matrix_netv=hankel(netv[:row],netv[row-1:])
+        MU,MS,MV=np.linalg.svd(matrix_netv)
+        dig=np.mat(np.eye(1)*MS[:1])
+        matrix_renetv=MU[:,:1]*dig*MV[:1,:]
+        essentialv=self.matdigserial(matrix_renetv)
+        ediff=netv-essentialv
+        rangenetv=netvmax-netvmin
+        rangeediff=np.max(ediff)-np.min(ediff)
+        lineediff=netvmin+(ediff-np.min(ediff))*rangenetv/rangeediff
+        p1.plot(x_axis, essentialv, label='essv[{}]'.format(round(essentialv[-1], 3)))
+        p1.plot(x_axis, lineediff, label='ediff[{}]'.format(round(ediff[-1], 3)))
+        
+
         p2.plot(x_axis, dv, label='dv(netv-ma)[{},{},{},{}]'.format(round(np.max(dv),3),round(np.min(dv),3),round(np.mean(dv),3),round(dvstd,3)))
         p2.plot(x_axis,lineidxdv,label='idxdv[{}<{}|{}>{}]'.format(round(dv[-1],3),round(np.mean(dv)-dvstd,3),round(np.mean(dv)+dvstd,3),round(idxdv[-1],3)))
         p2.plot(x_axis, madv, label='madv')
@@ -362,6 +382,60 @@ class fundnetv:
         p1.legend(loc=2)
         p2.legend(loc=2)
         p3.legend(loc=2)
+        p1.margins(0)
+        p2.margins(0)
+        p3.margins(0)
+
+    def showSVDFigure(self, tickcode, window=45, figure=None):
+        df = self.loadnetv(tickcode)
+        lastdate = df['vdate'].values[-1]
+        netv = df['unfixedvalue'].values.astype(float)
+        if figure == None:
+            figure = plt.figure()
+        figure.subplots_adjust(left=0.03, right=0.99, wspace=0.05, hspace=0.05, bottom=0.05, top=0.95)
+        figure.suptitle("{} {} {}".format(tickcode, self.fundname(tickcode), lastdate))
+        x_axis = np.linspace(1, netv.size, netv.size)
+        #SVD分解
+        row=math.ceil(netv.size/2)
+        matrix_netv=hankel(netv[:row],netv[row-1:])
+        MU,MS,MV=np.linalg.svd(matrix_netv)
+        p=figure.add_subplot(1,1,1)
+        p.plot(x_axis,netv)
+        p.grid()
+        p.margins(0)
+        colors=['#3cffcc','#5cffaa','#7c8888','#9c6666','#bc4444','#dc2222','#fc0000']
+        for rank in range(1,7):
+            dig=np.mat(np.eye(rank)*MS[:rank])
+            matrix_renetv=MU[:,:rank]*dig*MV[:rank,:]
+            essentialv=self.matdigserial(matrix_renetv)
+            #p=figure.add_subplot(7,1,rank+1)
+            p.plot(x_axis,essentialv,color=colors[rank],label='rank{}'.format(rank))
+            p.grid()
+            p.legend(loc=2)
+            p.margins(0)
+
+    def showPredictFigure(self, tickcode, predictLength=30,window=45, figure=None):
+        df = self.loadnetv(tickcode)
+        lastdate = df['vdate'].values[-1]
+        netv = df['unfixedvalue'].values.astype(float)
+        if figure == None:
+            figure = plt.figure()
+        figure.subplots_adjust(left=0.03, right=0.99, wspace=0.05, hspace=0.05, bottom=0.05, top=0.95)
+        figure.suptitle("{} {} {}".format(tickcode, self.fundname(tickcode), lastdate))
+        x_axis = np.linspace(1, netv.size, netv.size)
+        predict=[]
+        for i in range(0,netv.size-predictLength):
+            predict.append(np.mean(netv[i:i+predictLength]))
+        for i in range(predictLength,0,-1):
+            predict.append(np.mean(netv[-i:]))
+        p=figure.add_subplot(1,1,1)
+        p.plot(x_axis,netv)
+        p.grid()
+        p.margins(0)
+        p.plot(x_axis,predict)
+        p.plot(x_axis,netv)
+        
+        
 
     def showdata(self, tickcode, window=45):
         df = self.loadnetv(tickcode)
@@ -548,6 +622,25 @@ class fundnetv:
             cursor.close()
             conn.close()
         pass
+
+    def matdigserial(self,hmat):
+        if isinstance(hmat,np.matrix):
+            rdat1=np.asarray(hmat)
+        else:
+            rdat1=hmat
+        rdata=[]
+        row,col=np.shape(rdat1)
+        for c in range(0,row):
+            b=[rdat1[r][c-r] for r in range(0,c+1)]
+            rdata.append(np.mean(b))
+        if col>row:
+            for c in range(row,col):
+                b=[rdat1[r][c-r] for r in range(0,row)]
+                rdata.append(np.mean(b))
+        for r in range(1,row):
+            b=[rdat1[c][col-c+r-1] for c in range(r,row)]
+            rdata.append(np.mean(b))
+        return rdata
 
 # 计算delays阶以内的自相关系数，返回delays个值，分别计算序列均值，标准差
 def autocorrelation(x, delays=1):
