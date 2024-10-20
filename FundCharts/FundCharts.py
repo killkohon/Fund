@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import *
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import sys
+import sys,os
 import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
 import datetime as dt
@@ -73,7 +73,11 @@ class FundChart(QWidget):
         self.predictfigure = plt.figure()
         self.predictcanvas=FigureCanvas(self.predictfigure)
         self.tabs.addTab(self.predictcanvas,"Predict")
+        self.annfigure=plt.figure()
+        self.anncanvas=FigureCanvas(self.annfigure)
+        self.tabs.addTab(self.anncanvas,"Ann")
         self.gridlayout.addWidget(self.tabs, 1, 1)
+        
         self.canvas.draw()
         self.setLayout(self.gridlayout)
 
@@ -88,8 +92,10 @@ class FundChart(QWidget):
         self.predictfigure.clf()
         self.fund.showPredictFigure(obj.data,figure=self.predictfigure)
         self.predictcanvas.draw()
-
-
+        self.annfigure.clf()
+        self.fund.showAnnFigure(obj.data,figure=self.annfigure)
+        self.anncanvas.draw()
+        
     def refreshbtnclick(self):
         future = self.threadPool.submit(self.fund.refreshcdfma, 45)
         future.add_done_callback(self.callback_refreshbtnclick)
@@ -162,6 +168,9 @@ class manipulate_panel(QWidget):
         self.grabbtn = QPushButton("PullData")
         self.grabbtn.setMaximumWidth(100)
         self.grabbtn.clicked.connect(self.grabbtnclick)
+        self.regrabbtn = QPushButton("RegrabData")
+        self.regrabbtn.setMaximumWidth(100)
+        self.regrabbtn.clicked.connect(self.clearAndRegrab)
         self.grabnetvbtn = QPushButton("AddFund")
         self.grabnetvbtn.setMaximumWidth(100)
         self.holdingChkbox = QCheckBox("holding", self)
@@ -170,6 +179,7 @@ class manipulate_panel(QWidget):
         self.hboxlayout.addWidget(self.fundcodeedit, alignment=Qt.AlignLeft)
         self.hboxlayout.addWidget(self.grabnetvbtn, alignment=Qt.AlignLeft)
         self.hboxlayout.addWidget(self.grabbtn, alignment=Qt.AlignLeft)
+        self.hboxlayout.addWidget(self.regrabbtn, alignment=Qt.AlignLeft)
         self.hboxlayout.addWidget(self.holdingChkbox, alignment=Qt.AlignLeft)
         self.setLayout(self.hboxlayout)
 
@@ -191,7 +201,12 @@ class manipulate_panel(QWidget):
         else:
             print("unchecked-{}".format(self.fund.currentfund))
             self.fund.setholding(self.fund.currentfund, False)
-
+    def clearAndRegrab(self):
+        print("clearAndRegrab {}".format(self.fund.currentfund))
+        if self.fund.currentfund == None:
+            print("elect a fund to clear&regrab")
+        else:
+            print("sure {}".format(self.fund.currentfund))
 
 class MainUI(QWidget):
     def __init__(self):

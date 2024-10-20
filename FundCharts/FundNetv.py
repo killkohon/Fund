@@ -7,6 +7,7 @@ import sqlite3
 import urllib.parse
 import time
 import math
+import annfund
 from concurrent.futures import ThreadPoolExecutor
 
 import matplotlib.pyplot as plt
@@ -192,9 +193,18 @@ class fundnetv:
         except Exception as ex:
             print("except at grabnetv")
             print(ex)
+    def clrAndRegrab(self,tickcode):
+        try:
+            conn = self.PooL.connection()
+            cursor = conn.cursor()
+        except Exception as ex:
+            pass
+        finally:
+            cursor.close()
+            conn.close()
 
     def _grabnetv(self, tickcode):
-        nextdate = '2020-01-01'
+        nextdate = '2021-05-01'
         __isnewfund = True
         try:
             conn = self.PooL.connection()
@@ -267,6 +277,17 @@ class fundnetv:
                     tickcode, count))
             df = pd.DataFrame(list(cursor.fetchall()), columns=[x[0] for x in cursor.description])
             return df
+        except Exception as ex:
+            print(ex)
+        finally:
+            cursor.close()
+            conn.close()
+    def clearnetv(self,tickcode):
+        try:
+            conn = self.PooL.connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "delete from fund_values where fundcode='{}'".format(tickcode))
         except Exception as ex:
             print(ex)
         finally:
@@ -435,7 +456,39 @@ class fundnetv:
         p.plot(x_axis,predict)
         p.plot(x_axis,netv)
         
+    def showAnnFigure(self,tickcode,figure=None):
+        tickfund=annfund.Fund(tickcode)
+        if figure == None:
+            figure = plt.figure()
+        figure.subplots_adjust(left=0.03, right=0.99, wspace=0.05, hspace=0.05, bottom=0.05, top=0.95)
+        figure.suptitle("{} {}".format(tickcode, self.fundname(tickcode)))
         
+        rmax,ravg,rmin=tickfund._m2areal(620)
+        rmax=np.concatenate([rmax,[rmax[-1] for i in range(0,20)]])
+        ravg=np.concatenate([ravg,[ravg[-1] for i in range(0,20)]])
+        rmin=np.concatenate([rmin,[rmin[-1] for i in range(0,20)]])
+        x_axis =np.linspace(1,len(rmax),len(rmax))
+
+        
+        serial,pred=tickfund._calculate(620)
+        cpred=pred.to("cpu").detach().numpy()
+        pmax=[round(cpred[i][0],4) for i in range(0,len(cpred))]
+        pavg=[round(cpred[i][1],4) for i in range(0,len(cpred))]
+        pmin=[round(cpred[i][2],4) for i in range(0,len(cpred))]
+        
+    
+        p=figure.add_subplot(1,1,1)
+        p.grid()
+        p.margins(0)
+        p.plot(x_axis,serial,label="real:{}".format(round(serial[-1],3)),color=(1.0,0,0.0))
+        p.plot(x_axis,rmax,label="realmax:{}".format(round(rmax[-1],3)),color=(0.0,0.95,0.0))
+        p.plot(x_axis,pmax,label="predmax:{}".format(round(pmax[-1],3)),color=(0.0,0.0,0.95))
+        p.plot(x_axis,ravg,label="realavg:{}".format(round(ravg[-1],3)),color=(0.0,0.75,0.0))
+        p.plot(x_axis,pavg,label="predavg:{}".format(round(pavg[-1],3)),color=(0.0,0.0,0.75))
+        p.plot(x_axis,rmin,label="realmin:{}".format(round(rmin[-1],3)),color=(0.0,0.5,0.0))
+        p.plot(x_axis,pmin,label="predmin:{}".format(round(pmin[-1],3)),color=(0.0,0.0,0.5))
+        p.legend(loc=2)
+
 
     def showdata(self, tickcode, window=45):
         df = self.loadnetv(tickcode)
@@ -616,7 +669,7 @@ class fundnetv:
                     conn.commit()
             conn.commit()
         except Exception as ex:
-            print("exception in stddiff")
+            print("exception in stddiff {}".format())
             print(ex)
         finally:
             cursor.close()
