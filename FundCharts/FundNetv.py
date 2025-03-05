@@ -11,6 +11,7 @@ import annfund
 from concurrent.futures import ThreadPoolExecutor
 
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator, AutoMinorLocator
 import numpy as np
 import pandas as pd
 import requests
@@ -21,8 +22,11 @@ from scipy.linalg import hankel
 
 import polyfit
 
-plt.rcParams['font.sans-serif'] = ['KaiTi']
-plt.rcParams['font.serif'] = ['KaiTi']
+# plt.rcParams['font.sans-serif'] = ['KaiTi']
+# plt.rcParams['font.serif'] = ['KaiTi']
+# plt.rcParams['axes.unicode_minus'] = False
+
+plt.rcParams['font.family'] = ['Microsoft YaHei']
 plt.rcParams['axes.unicode_minus'] = False
 
 
@@ -192,7 +196,7 @@ class fundnetv:
             self.threadPool.submit(self._grabnetv, tickcode)
         except Exception as ex:
             print("except at grabnetv")
-            print(ex)
+            print(str(ex))
     def clrAndRegrab(self,tickcode):
         try:
             conn = self.PooL.connection()
@@ -374,7 +378,7 @@ class fundnetv:
         row=math.ceil(netv.size/2)
         matrix_netv=hankel(netv[:row],netv[row-1:])
         MU,MS,MV=np.linalg.svd(matrix_netv)
-        dig=np.mat(np.eye(1)*MS[:1])
+        dig=np.asmatrix(np.eye(1)*MS[:1])
         matrix_renetv=MU[:,:1]*dig*MV[:1,:]
         essentialv=self.matdigserial(matrix_renetv)
         ediff=netv-essentialv
@@ -426,7 +430,7 @@ class fundnetv:
         p.margins(0)
         colors=['#3cffcc','#5cffaa','#7c8888','#9c6666','#bc4444','#dc2222','#fc0000']
         for rank in range(1,7):
-            dig=np.mat(np.eye(rank)*MS[:rank])
+            dig=np.asmatrix(np.eye(rank)*MS[:rank])
             matrix_renetv=MU[:,:rank]*dig*MV[:rank,:]
             essentialv=self.matdigserial(matrix_renetv)
             #p=figure.add_subplot(7,1,rank+1)
@@ -478,15 +482,17 @@ class fundnetv:
         
     
         p=figure.add_subplot(1,1,1)
+        ax=plt.gca()
+        ax.xaxis.set_major_locator(MultipleLocator(20))
         p.grid()
         p.margins(0)
         p.plot(x_axis,serial,label="real:{}".format(round(serial[-1],3)),color=(1.0,0,0.0))
-        p.plot(x_axis,rmax,label="realmax:{}".format(round(rmax[-1],3)),color=(0.0,0.95,0.0))
-        p.plot(x_axis,pmax,label="predmax:{}".format(round(pmax[-1],3)),color=(0.0,0.0,0.95))
-        p.plot(x_axis,ravg,label="realavg:{}".format(round(ravg[-1],3)),color=(0.0,0.75,0.0))
-        p.plot(x_axis,pavg,label="predavg:{}".format(round(pavg[-1],3)),color=(0.0,0.0,0.75))
-        p.plot(x_axis,rmin,label="realmin:{}".format(round(rmin[-1],3)),color=(0.0,0.5,0.0))
-        p.plot(x_axis,pmin,label="predmin:{}".format(round(pmin[-1],3)),color=(0.0,0.0,0.5))
+        p.plot(x_axis,rmax,label="realmax:{}".format(round(rmax[-1],3)),color=(0.0,1.0,0.0))
+        p.plot(x_axis,pmax,label="predmax:{}".format(round(pmax[-1],3)),color=(0.0,0.0,1.0))
+        p.plot(x_axis,ravg,label="realavg:{}".format(round(ravg[-1],3)),color=(0.0,0.8,0.0))
+        p.plot(x_axis,pavg,label="predavg:{}".format(round(pavg[-1],3)),color=(0.0,0.0,0.8))
+        p.plot(x_axis,rmin,label="realmin:{}".format(round(rmin[-1],3)),color=(0.0,0.6,0.0))
+        p.plot(x_axis,pmin,label="predmin:{}".format(round(pmin[-1],3)),color=(0.0,0.0,0.6))
         p.legend(loc=2)
 
 
