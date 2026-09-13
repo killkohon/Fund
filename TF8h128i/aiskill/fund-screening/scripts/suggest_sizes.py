@@ -180,6 +180,110 @@ def build_trade_suggestions(conn: sqlite3.Connection, screen: dict[str, Any]) ->
             }
         )
 
+    sell_prio = {"减仓观望": 0, "减仓": 1, "卖出": 2}
+    pending_sells: list[dict[str, Any]] = []
+    for h in (screen.get("holding_context") or {}).get("funds") or []:
+        dec = h.get("decision") or {}
+        action = dec.get("action")
+        if action not in SELL_FRAC or not h.get("fundcode"):
+            continue
+        code = str(h["fundcode"])
+        nav = navs.get(code)
+        avail = fp.current_shares(conn, code)
+        want = avail * SELL_FRAC[action]
+        reasons: list[str] = []
+        lock = dec.get("holding_lock") or {}
+        if lock.get("locked"):
+            reasons.append("持有期锁定，需确认可赎")
+        if avail <= 1e-12 or want <= 1e-12:
+            reasons.append("无确认份额")
+            pending_sells.append(
+                {
+                    "fundcode": code,
+                    "fundname": h.get("fundname") or "",
+                    "action": action,
+                    "shares": 0.0,
+                    "nav": nav,
+                    "reasons": reasons,
+                    "weight": 0.0,
+                }
+            )
+            continue
+        pending_sells.append(
+            {
+                "fundcode": code,
+                "fundname": h.get("fundname") or "",
+                "action": action,
+                "shares": float(want),
+                "nav": nav,
+                "reasons": reasons,
+                "weight": 0.0,
+            }
+        )
+
+    sell_mv = 0.0
+    for s in pending_sells:
+        if s["nav"] and s["nav"] > 0:
+            sell_mv += s["shares"] * s["nav"]
+    if sell_mv > max_sell_mv + 1e-9:
+        overflow = sell_mv - max_sell_mv
+        ordered = sorted(
+            pending_sells,
+            key=lambda s: (sell_prio.get(s["action"], 9), s["fundcode"]),
+        )
+        for s in ordered:
+            if overflow <= 1e-9:
+                break
+            nav = s["nav"]
+            if not nav or nav <= 0 or s["shares"] <= 0:
+                continue
+            mv = s["shares"] * nav
+            cut = min(mv, overflow)
+            s["shares"] -= cut / nav
+            if s["shares"] < 1e-12:
+                s["shares"] = 0.0
+            overflow -= cut
+
+    settle = as_of or None
+    for s in pending_sells:
+        nav = s["nav"]
+        sh = float(s["shares"])
+        est_fee = 0.0
+        amount = 0.0
+        extra: list[str] = []
+        if sh > 1e-12 and nav and nav > 0:
+            n_rules = conn.execute(
+                "SELECT COUNT(*) FROM fund_fee_rules WHERE fundcode=? AND side='sell'",
+                (s["fundcode"],),
+            ).fetchone()[0]
+            if n_rules == 0:
+                extra.append("无费率规则")
+            try:
+                est_fee = float(
+                    fp._fifo_sell_fee(
+                        conn, s["fundcode"], sh, settle or "2026-09-11", float(nav)
+                    )
+                )
+            except ValueError:
+                extra.append("赎回费估算失败")
+                est_fee = 0.0
+            amount = sh * float(nav) - est_fee
+        s["reasons"].extend(extra)
+        items.append(
+            {
+                "fundcode": s["fundcode"],
+                "fundname": s["fundname"],
+                "side": "sell",
+                "action": s["action"],
+                "amount": round(amount, 2),
+                "shares": round(sh, 4),
+                "est_fee": round(est_fee, 2),
+                "est_nav": nav,
+                "weight": 0.0,
+                "reasons": s["reasons"],
+            }
+        )
+
     return {
         "as_of": as_of,
         "position_plan": {

@@ -132,10 +132,106 @@ def test_floor_keeps_one_buy() -> None:
     assert buy["amount"] >= 100
 
 
+def _hold_dec(code: str, name: str, action: str, locked: bool = False) -> dict:
+    dec = {
+        "action": action,
+        "holding_lock": {"locked": locked, "period": "1年" if locked else None},
+    }
+    return {"fundcode": code, "fundname": name, "decision": dec}
+
+
+def test_sell_frac() -> None:
+    conn = _db()
+    _nav(conn, "S00001", 2.0)
+    fp.add_trade(conn, fundcode="S00001", side="init", settle_date="2026-01-01", shares=1000, nav=2.0)
+    screen = _screen(buys=[], holds=[_hold_dec("S00001", "减", "减仓")])
+    out = build_trade_suggestions(conn, screen)
+    sell = [i for i in out["items"] if i["side"] == "sell"][0]
+    assert abs(sell["shares"] - 300) < 1e-6
+
+
+def test_sell_watch_and_exit() -> None:
+    conn = _db()
+    _nav(conn, "S00002", 1.0)
+    _nav(conn, "S00003", 1.0)
+    fp.add_trade(conn, fundcode="S00002", side="init", settle_date="2026-01-01", shares=1000, nav=1.0)
+    fp.add_trade(conn, fundcode="S00003", side="init", settle_date="2026-01-01", shares=1000, nav=1.0)
+    screen = _screen(
+        regime="ice_point",
+        buys=[],
+        holds=[
+            _hold_dec("S00002", "观", "减仓观望"),
+            _hold_dec("S00003", "清", "卖出"),
+        ],
+    )
+    out = build_trade_suggestions(conn, screen)
+    by = {i["fundcode"]: i["shares"] for i in out["items"] if i["side"] == "sell"}
+    assert abs(by["S00002"] - 150) < 1e-6
+    assert abs(by["S00003"] - 1000) < 1e-6
+
+
+def test_sell_cap_scales_watch_first() -> None:
+    conn = _db()
+    fp.deposit_cash(conn, 100, entry_date="2026-09-11")
+    _nav(conn, "S00001", 1.0)
+    fp.add_trade(conn, fundcode="S00001", side="init", settle_date="2026-01-01", shares=1000, nav=1.0)
+    screen = _screen(
+        regime="strong_up",
+        buys=[],
+        holds=[_hold_dec("S00001", "清", "卖出")],
+    )
+    out = build_trade_suggestions(conn, screen)
+    sell = [i for i in out["items"] if i["side"] == "sell"][0]
+    assert sell["shares"] * 1.0 <= out["position_plan"]["max_sell_mv"] + 1e-6
+    assert sell["shares"] < 1000
+
+
+def test_zero_shares_sell() -> None:
+    conn = _db()
+    _nav(conn, "S00001", 1.0)
+    screen = _screen(buys=[], holds=[_hold_dec("S00001", "军", "减仓")])
+    out = build_trade_suggestions(conn, screen)
+    sell = [i for i in out["items"] if i["side"] == "sell"][0]
+    assert sell["shares"] == 0
+    assert any("无确认份额" in r for r in sell["reasons"])
+
+
+def test_lock_note() -> None:
+    conn = _db()
+    _nav(conn, "S00001", 1.0)
+    fp.add_trade(conn, fundcode="S00001", side="init", settle_date="2026-01-01", shares=1000, nav=1.0)
+    screen = _screen(buys=[], holds=[_hold_dec("S00001", "锁", "减仓观望", locked=True)])
+    out = build_trade_suggestions(conn, screen)
+    sell = [i for i in out["items"] if i["side"] == "sell"][0]
+    assert sell["shares"] > 0
+    assert any("锁定" in r for r in sell["reasons"])
+
+
+def test_redeem_not_in_buy_budget() -> None:
+    conn = _db()
+    fp.deposit_cash(conn, 1000, entry_date="2026-09-11")
+    _nav(conn, "S00001", 1.0)
+    _nav(conn, "A00001", 1.0)
+    fp.add_trade(conn, fundcode="S00001", side="init", settle_date="2026-01-01", shares=5000, nav=1.0)
+    screen = _screen(
+        regime="chop",
+        buys=[_buy_row("A00001", "甲", 100, "加仓", 1)],
+        holds=[_hold_dec("S00001", "减", "减仓")],
+    )
+    out = build_trade_suggestions(conn, screen)
+    assert out["position_plan"]["buy_budget"] == 0
+
+
 if __name__ == "__main__":
     test_buy_weights_split_cash()
     test_drop_sub_100_no_regurgitate()
     test_overweight_chop_zero_buy_budget()
     test_crash_mode_band()
     test_floor_keeps_one_buy()
-    print("test_suggest_sizes task1: all passed")
+    test_sell_frac()
+    test_sell_watch_and_exit()
+    test_sell_cap_scales_watch_first()
+    test_zero_shares_sell()
+    test_lock_note()
+    test_redeem_not_in_buy_budget()
+    print("test_suggest_sizes: all passed")
