@@ -207,6 +207,28 @@ def test_lock_note() -> None:
     assert any("锁定" in r for r in sell["reasons"])
 
 
+def test_screen_dict_roundtrip_keys() -> None:
+    conn = _db()
+    fp.deposit_cash(conn, 1000, entry_date="2026-09-11")
+    out = build_trade_suggestions(conn, _screen(buys=[]))
+    assert set(out) == {"as_of", "position_plan", "items"}
+    plan = out["position_plan"]
+    for k in (
+        "cash",
+        "market_value",
+        "total_assets",
+        "equity",
+        "regime",
+        "crash_mode",
+        "band",
+        "buy_budget",
+        "unallocated_cash",
+        "max_sell_mv",
+        "notes",
+    ):
+        assert k in plan
+
+
 def test_redeem_not_in_buy_budget() -> None:
     conn = _db()
     fp.deposit_cash(conn, 1000, entry_date="2026-09-11")
@@ -233,5 +255,6 @@ if __name__ == "__main__":
     test_sell_cap_scales_watch_first()
     test_zero_shares_sell()
     test_lock_note()
+    test_screen_dict_roundtrip_keys()
     test_redeem_not_in_buy_budget()
     print("test_suggest_sizes: all passed")
