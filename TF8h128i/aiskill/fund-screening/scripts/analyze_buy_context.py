@@ -1054,16 +1054,22 @@ def _print_market_regime_section(regime: dict[str, Any]) -> None:
 def _print_merged_buy_ranking_section(
     merged: dict[str, Any] | None, ts: dict[str, Any] | None = None
 ) -> None:
-    if not merged or not merged.get("by_execution"):
+    if not merged:
+        return
+    execution = merged.get("by_execution") or []
+    tech_rows = merged.get("by_tech_score") or []
+    watched = [r for r in tech_rows if r.get("decision") == "新建观察"]
+    if not execution and not watched:
         return
     by_code = _items_by_code(ts)
     print("\n## 买入合并排序（Top10 + 持仓加仓/轻仓加仓/可考虑加仓）\n")
     print(f"- **口径**：{merged.get('method', '')}")
     print(f"- **样本数**：{merged.get('n', 0)} | regime={merged.get('regime')} | as_of={merged.get('as_of')}")
-    print("\n### 执行优先序（建议按此操作）\n")
-    print("| 序 | 代码 | 名称 | buy_score | ANN% | 决策 | 来源 | 建议数量 | 市场面 |")
-    print("|----|------|------|-----------|------|------|------|----------|--------|")
-    for r in merged["by_execution"]:
+    if execution:
+        print("\n### 执行优先序（建议按此操作）\n")
+        print("| 序 | 代码 | 名称 | buy_score | ANN% | 决策 | 来源 | 建议数量 | 市场面 |")
+        print("|----|------|------|-----------|------|------|------|----------|--------|")
+    for r in execution:
         ann = r.get("ann_pred_pct")
         ann_s = "N/A" if ann is None else f"{ann:+.1f}"
         qty = _fmt_suggestion(by_code.get(r["fundcode"]), side="buy")
@@ -1072,10 +1078,18 @@ def _print_merged_buy_ranking_section(
             f"| {r.get('buy_score', 0):.2f} | {ann_s} | {r.get('decision', '')} "
             f"| {r.get('source', '')} | {qty} | {r.get('market_verdict') or ''} |"
         )
-    print("\n### 技术分序（buy_score）\n")
-    print("| 序 | 代码 | 名称 | buy_score | ANN% | 决策 | 来源 |")
-    print("|----|------|------|-----------|------|------|------|")
-    for r in merged["by_tech_score"]:
+    if watched:
+        print("\n### 新建观察（不进入执行序，建议金额为 0）\n")
+        print("| 代码 | 名称 | buy_score | 原因 |")
+        print("|------|------|-----------|------|")
+        for r in watched:
+            why = "、".join(r.get("exclude_reason") or [])
+            print(f"| {r['fundcode']} | {r['fundname'][:10]} | {r.get('buy_score', 0):.2f} | {why} |")
+    if tech_rows:
+        print("\n### 技术分序（buy_score）\n")
+        print("| 序 | 代码 | 名称 | buy_score | ANN% | 决策 | 来源 |")
+        print("|----|------|------|-----------|------|------|------|")
+    for r in tech_rows:
         ann = r.get("ann_pred_pct")
         ann_s = "N/A" if ann is None else f"{ann:+.1f}"
         print(

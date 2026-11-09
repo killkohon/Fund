@@ -1,0 +1,16 @@
+# ninja log v6
+7	42	8104806558968270	clean	8c45b54705a541e8
+6	40	8104806699759995	clean	8c45b54705a541e8
+63	502	8104806701009995	CMakeFiles/annfund.dir/src/db.c.obj	2d28cb2d1c28f0a5
+78	509	8104806701156589	CMakeFiles/annfund.dir/src/dataset.c.obj	9a9be8bc79db2020
+119	535	8104806701576554	CMakeFiles/annfund.dir/src/weights.c.obj	b0296536d2cd137f
+8	778	8104806700459987	CMakeFiles/test_compat.dir/tools/test_compat.c.obj	a074820d5b6a8507
+96	790	8104806701346559	CMakeFiles/annfund.dir/src/queue.c.obj	91ef955c56138274
+40	796	8104806700780020	CMakeFiles/test_compat.dir/src/queue.c.obj	b1f93d310f3b696d
+51	809	8104806700889996	CMakeFiles/annfund.dir/src/main.c.obj	2b385b0f3f85339a
+24	816	8104806700610007	CMakeFiles/test_compat.dir/src/win_compat.c.obj	7eb0d33757fb2ee7
+137	840	8104806701756547	CMakeFiles/annfund.dir/src/win_compat.c.obj	e2c598db11658427
+817	1659	8104806708541752	test_compat.exe	276fbcb43ec80836
+254	2045	8104806702923039	CMakeFiles/annfund.dir/third_party/sqlite/sqlite3.c.obj	33684ea7f689e91f
+155	5538	8104806701936554	CMakeFiles/annfund.dir/src/model.cu.obj	6148468ac1a35966
+5540	6626	8104806755782272	annfund.exe	6750326e954beb42

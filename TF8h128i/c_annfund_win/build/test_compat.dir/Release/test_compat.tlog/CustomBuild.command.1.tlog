@@ -1,0 +1,10 @@
+^D:\WORKSPACE\PERSONAL\FUND\TF8H128I\C_ANNFUND_WIN\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/workspace/personal/Fund/TF8h128i/c_annfund_win -BD:/workspace/personal/Fund/TF8h128i/c_annfund_win/build --check-stamp-file D:/workspace/personal/Fund/TF8h128i/c_annfund_win/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

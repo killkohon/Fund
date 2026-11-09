@@ -18,6 +18,7 @@ TIER_COEF = {
     "轻仓加仓": 0.5,
     "可考虑加仓": 0.3,
     "新建候选": 0.2,
+    "新建候选(关注)": 0.2,
     "新建候选(defer)": 0.2,
 }
 BANDS = {
@@ -95,7 +96,36 @@ def _fill_buy_fee(
     return float(fee), float(shares), extra
 
 
-def build_trade_suggestions(conn: sqlite3.Connection, screen: dict[str, Any]) -> dict[str, Any]:
+def split_ac_buys(
+    buys: list[dict[str, Any]], mates: dict[str, str]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """同一已验证 A/C 对只保留 exec_rank 更小的一笔。被去掉的权重不回灌。"""
+    buy_codes = {str(r.get("fundcode")) for r in buys}
+    grouped: dict[tuple, list[tuple[int, dict[str, Any]]]] = {}
+    order: list[tuple] = []
+    for idx, row in enumerate(buys):
+        code = str(row.get("fundcode"))
+        mate = mates.get(code)
+        key: tuple = tuple(sorted((code, mate))) if mate and mate in buy_codes else ("solo", code, idx)
+        if key not in grouped:
+            grouped[key] = []
+            order.append(key)
+        grouped[key].append((idx, row))
+    kept: list[dict[str, Any]] = []
+    dropped: list[dict[str, Any]] = []
+    for key in order:
+        group = sorted(grouped[key], key=lambda item: (int(item[1].get("exec_rank") or 0), item[0]))
+        kept.append(group[0][1])
+        dropped.extend(item[1] for item in group[1:])
+    kept.sort(key=lambda r: int(r.get("exec_rank") or 0))
+    return kept, dropped
+
+
+def build_trade_suggestions(
+    conn: sqlite3.Connection,
+    screen: dict[str, Any],
+    ac_mates: dict[str, str] | None = None,
+) -> dict[str, Any]:
     mr = screen.get("market_regime") or {}
     as_of = mr.get("as_of") or ""
     regime = mr.get("regime") or "chop"
@@ -123,6 +153,11 @@ def build_trade_suggestions(conn: sqlite3.Connection, screen: dict[str, Any]) ->
         if r.get("decision") in BUY_ACTIONS and r.get("fundcode")
     ]
     buys.sort(key=lambda r: int(r.get("exec_rank") or 0))
+    if ac_mates is None:
+        from find_ac_pairs import load_ac_mates
+
+        ac_mates = load_ac_mates()
+    buys, ac_dropped = split_ac_buys(buys, ac_mates)
 
     raws: list[float] = []
     weights: list[float] = []
@@ -177,6 +212,22 @@ def build_trade_suggestions(conn: sqlite3.Connection, screen: dict[str, Any]) ->
                 "est_nav": nav,
                 "weight": round(w, 4),
                 "reasons": reasons,
+            }
+        )
+    for r in ac_dropped:
+        nav = navs.get(str(r["fundcode"]))
+        items.append(
+            {
+                "fundcode": r["fundcode"],
+                "fundname": r.get("fundname") or "",
+                "side": "buy",
+                "action": r.get("decision") or "",
+                "amount": 0.0,
+                "shares": None,
+                "est_fee": 0.0,
+                "est_nav": nav,
+                "weight": 0.0,
+                "reasons": ["A/C配对只保留执行序更前的一只"],
             }
         )
 

@@ -1,0 +1,87 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Release-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.18"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "c_annfund_win",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "annfund::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-annfund-Release-9071d729a633a5d8ce99.json",
+					"name" : "annfund",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_bin_to_pth::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_bin_to_pth-Release-22cc68981fb46fb29d49.json",
+					"name" : "test_bin_to_pth",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_compat::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_compat-Release-4476d66b0a51cf6f0f92.json",
+					"name" : "test_compat",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_pth_to_bin::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_pth_to_bin-Release-272218ac338fd471ab91.json",
+					"name" : "test_pth_to_bin",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "D:/workspace/personal/Fund/TF8h128i/c_annfund_win/out/build/x64-Release",
+		"source" : "D:/workspace/personal/Fund/TF8h128i/c_annfund_win"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 8
+	}
+}

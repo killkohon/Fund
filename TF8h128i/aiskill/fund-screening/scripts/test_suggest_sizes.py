@@ -229,6 +229,41 @@ def test_screen_dict_roundtrip_keys() -> None:
         assert k in plan
 
 
+def test_watch_new_buy_receives_budget() -> None:
+    conn = _db()
+    fp.deposit_cash(conn, 8000, entry_date="2026-09-11")
+    _nav(conn, "A00001", 1.0)
+    screen = _screen(buys=[_buy_row("A00001", "甲", 100, "新建候选(关注)", 1)])
+    out = build_trade_suggestions(conn, screen, ac_mates={})
+    buy = [i for i in out["items"] if i["side"] == "buy"][0]
+    assert abs(buy["amount"] - 6400) < 0.01
+
+
+def test_ac_pair_keeps_earlier_exec_only() -> None:
+    conn = _db()
+    fp.deposit_cash(conn, 8000, entry_date="2026-09-11")
+    for code in ("166005", "004232", "A00003"):
+        _nav(conn, code, 1.0)
+    screen = _screen(
+        buys=[
+            _buy_row("166005", "甲A", 100, "加仓", 1),
+            _buy_row("004232", "甲C", 100, "加仓", 2),
+            _buy_row("A00003", "丙", 100, "加仓", 3),
+        ]
+    )
+    out = build_trade_suggestions(
+        conn,
+        screen,
+        ac_mates={"166005": "004232", "004232": "166005"},
+    )
+    by = {i["fundcode"]: i for i in out["items"] if i["side"] == "buy"}
+    assert by["004232"]["amount"] == 0
+    assert any("A/C" in r for r in by["004232"]["reasons"])
+    assert abs(by["166005"]["amount"] - 3200) < 0.01
+    assert abs(by["A00003"]["amount"] - 3200) < 0.01
+    assert [i for i in out["items"] if i["side"] == "sell"] == []
+
+
 def test_redeem_not_in_buy_budget() -> None:
     conn = _db()
     fp.deposit_cash(conn, 1000, entry_date="2026-09-11")
@@ -256,5 +291,7 @@ if __name__ == "__main__":
     test_zero_shares_sell()
     test_lock_note()
     test_screen_dict_roundtrip_keys()
+    test_watch_new_buy_receives_budget()
+    test_ac_pair_keeps_earlier_exec_only()
     test_redeem_not_in_buy_budget()
     print("test_suggest_sizes: all passed")

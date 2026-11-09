@@ -1,0 +1,6 @@
+D:/workspace/personal/Fund/TF8h128i/c_annfund_win/out/build/x64-Release/CMakeFiles/test_compat.dir
+D:/workspace/personal/Fund/TF8h128i/c_annfund_win/out/build/x64-Release/CMakeFiles/test_bin_to_pth.dir
+D:/workspace/personal/Fund/TF8h128i/c_annfund_win/out/build/x64-Release/CMakeFiles/test_pth_to_bin.dir
+D:/workspace/personal/Fund/TF8h128i/c_annfund_win/out/build/x64-Release/CMakeFiles/annfund.dir
+D:/workspace/personal/Fund/TF8h128i/c_annfund_win/out/build/x64-Release/CMakeFiles/edit_cache.dir
+D:/workspace/personal/Fund/TF8h128i/c_annfund_win/out/build/x64-Release/CMakeFiles/rebuild_cache.dir

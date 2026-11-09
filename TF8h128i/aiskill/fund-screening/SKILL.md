@@ -89,6 +89,7 @@ python aiskill/fund-screening/scripts/analyze_buy_context.py 519606 164402
 - [ ] `trade_suggestions.items` 覆盖合并买入候选与减仓/减仓观望/卖出
 - [ ] 报告含「买入合并排序」节（执行优先序为主）
 - [ ] 报告含「仓位计划」与建议数量列
+- [ ] 「今日市场评估」含净值日与预计确认日（见执行日历）
 - [ ] 未跳过 `--with-context` 却输出消息面/市场面/市场评估
 
 ## JSON 输出结构
@@ -123,7 +124,7 @@ python aiskill/fund-screening/scripts/analyze_buy_context.py 519606 164402
 | `pool` | 池内指标：`n_funds`、`day_median`、`down_ratio`、`ret5_median`、`ret10_median`、`rebound_fail` 等 |
 | `index` | 指数：`status`（`ok` / `unavailable`）、`hs300`、`cyb`（含 `ret_1d` 等） |
 
-指数 API 不可用时 `index.status = "unavailable"`，**仍用池内指标判定 regime**，筛选不中断。
+指数优先拉东方财富 K 线（失败重试），再回退新浪快照补 `ret_1d`。两侧都失败时 `index.status = "unavailable"`，**仍用池内指标判定 regime**，筛选不中断。
 
 `buy_context` / `holding_context` 均为 **object**（非 array），结构：
 
@@ -148,11 +149,12 @@ python aiskill/fund-screening/scripts/analyze_buy_context.py 519606 164402
 | `as_of` / `regime` | 与 `market_regime` 对齐 |
 | `method` | 排序口径说明 |
 | `n` | 合并后样本数 |
-| `by_execution` | **执行优先序**（报告主表）：持仓 `加仓` > `轻仓加仓` > `可考虑加仓` 优先，新建 `defer` 靠后；同档按 `buy_score` 降序 |
+| `by_execution` | **执行优先序**（报告主表）：`加仓` > `轻仓加仓` > `可考虑加仓` > `新建候选` > `新建候选(关注)` > `新建候选(defer)`；同档按 `buy_score` 降序。不含 `新建观察` |
 | `by_tech_score` | 纯技术序：按 `buy_score`（技术分+ANN加分）降序 |
 
 纳入规则：
-- 买入 Top10：标签 `新建候选` 或 `新建候选(defer)`（看 `execution_hint`）
+- 买入 Top10：`新建候选`；消息面 `关注` 为 `新建候选(关注)`；弱势 `defer_or_tranche` 为 `新建候选(defer)`（盖过关注）
+- 消息面 `谨慎`，或市场面 `相对板块偏强（追价性价比下降）`：`新建观察`，只留在 `by_tech_score`，建议金额为 0
 - 持仓：`decision.action in {加仓, 轻仓加仓, 可考虑加仓}`（含 regime 软降档后）
 - 持仓 `buy_score` 由持仓技术指标现场重算（持仓列表里原 `buy_score` 恒为 0）
 
@@ -169,7 +171,30 @@ python aiskill/fund-screening/scripts/analyze_buy_context.py 519606 164402
 | `position_plan` | 现金、市值、当前仓位、regime 目标带、买入预算、暴跌模式 |
 | `items[]` | `side=buy` 为含费申购金额；`side=sell` 为赎回份额 + 到账约估 |
 
-仓位带与拆分规则见 `docs/superpowers/specs/2026-09-13-trade-size-suggestions-design.md`。数字必须以脚本为准。
+仓位带与拆分规则见 `docs/superpowers/specs/2026-09-13-trade-size-suggestions-design.md`。新建软降档与 A/C 单笔预算见 `docs/superpowers/specs/2026-10-25-new-buy-ac-gate-design.md`。数字必须以脚本为准。
+
+`新建候选(关注)` 档位系数与 `新建候选` 相同（0.2）。同一已验证 A/C 对在执行序里有多笔买入时，只给 `exec_rank` 更前的一笔金额，另一笔为 0，不因此新增卖出。配对只认 `fund_ac_pairs.json` 的 `pairs`。
+
+## 执行日历（净值日 ≠ 确认日）
+
+脚本按**已公布净值日**给决策和仓位带。本账户**每天 15:00 后下单**。Agent **只标注日历，不改** `decision.action`、合并排序、`trade_suggestions` 金额/份额。
+
+| 项 | 取值 |
+|----|------|
+| 净值日 | JSON `market_regime.as_of` |
+| 提交时刻 | **写报告时的本地时间**（北京时间）。不要用 JSON `generated_at` 代替 |
+| 预计确认日 | 提交时刻之后的**第 2 个** A 股交易日（与「工作日」同一口径：跳过周末、法定节假日、调休） |
+| 交易日 | 上交所/深交所日历。未来休市以交易所公告为准；不确定时写「之后第 2 个开市日」并点最近假期名，不要编造具体日期 |
+
+示例（均按 15:00 后下单）：
+
+| 提交时刻 | 第 1 个交易日 | 预计确认日（第 2 个） |
+|----------|----------------|------------------------|
+| 周二 22:00 | 周三 | 周四 |
+| 周五 22:00 | 下周一 | 下周二 |
+| 周日 16:00 | 周一 | 周二 |
+
+仅当净值日与预计确认日之间含**法定节假日**（普通周末不算）：在市场评估加一句「节后才成交，信号可能过期」。仓位带与决策仍按净值日 JSON，不要按预计确认日重算 regime。
 
 ## 策略摘要
 
@@ -196,6 +221,7 @@ python aiskill/fund-screening/scripts/analyze_buy_context.py 519606 164402
 | API 申赎受限 | 申赎受限 |
 | 规模 < 1 亿 | 规模偏小 |
 | `holding=1` | 已持仓 |
+| 已验证 A/C 的另一只 `holding=1` | A/C已持有 |
 
 **说明**：名称含 ETF 的排除；**LOF 仍可能入榜**（如煤炭 LOF）。
 
@@ -290,15 +316,19 @@ python aiskill/fund-screening/scripts/analyze_buy_context.py 519606 164402
 
 脚本运行后（**必须含 `--with-context`**），用中文整理为：
 
+报告用语：再次筛选写「再分析」「再筛一次」「收盘后再看」。不要对用户写「再跑」「跑一次」——「跑」会被听成卖出。
+
 ```markdown
 # 基金筛选报告（YYYY-MM-DD）
 
 ## 今日市场评估
 （**必须**来自 JSON 顶层 `market_regime`，勿编造）
+- 净值日 / 预计确认日 / 提交时刻是否已过 15:00（执行日历，见上节）
 - 日期 / regime / scenario / advice
 - 池：日中位、下跌面、近5/10日
 - 指数：沪深300、创业板（`index.status=ok` 时展示；不可用时注明仅用池内）
 - 对买卖含义：弱势时加仓类软降档、新建仓宜缓/分批
+- 若预计确认日跨节假日休市：写「节后才成交，信号可能过期」
 
 ## 买入推荐 Top10（技术面）
 （表格；排名不变；可附 execution_hint / market_regime_note）
@@ -319,7 +349,7 @@ python aiskill/fund-screening/scripts/analyze_buy_context.py 519606 164402
 （持仓行业分布 + 逐基）
 
 ## 持仓综合决策
-（表格：技术建议 → 综合决策；增加「建议数量」列，数字来自 `trade_suggestions.items`）
+（表格列必须含 **代码、名称**；技术建议 → 综合决策；增加「建议数量」列，数字来自 `trade_suggestions.items`。每只持仓单独一行，勿用「其余 N 只」省略名称）
 
 ## 仓位计划
 （**必须**来自 `trade_suggestions.position_plan`：当前仓位、目标带、买入预算、是否暴跌模式）
@@ -327,10 +357,12 @@ python aiskill/fund-screening/scripts/analyze_buy_context.py 519606 164402
 ## 买入合并排序（Top10 + 持仓加仓/轻仓加仓/可考虑加仓）
 （**必须**来自 JSON 顶层 `merged_buy_ranking`，勿手算改序）
 - 优先展示 **`by_execution`（执行优先序）** 表格，并带「建议数量」列
+- 若有「新建观察」表，这些基金不进执行序、建议金额为 0
 - 可附 `by_tech_score`（纯技术分序）作对照
 - 综合点评中引用执行序前几名作为「今日优先买入/补仓」
 
 ## 综合点评（Agent 撰写）
+- 可执行操作（建议数量大于 0）对应的预计确认日；跨节则点明节后成交
 - 买入与持仓行业是否重叠、是否过度集中（同主题 A/C 勿重复计入）
 - 持仓中哪些「技术面加仓」被消息面/市场面/regime 降级或强化
 - 需优先执行的加仓/减仓标的（与合并排序执行序对齐）
@@ -341,6 +373,8 @@ python aiskill/fund-screening/scripts/analyze_buy_context.py 519606 164402
 - 综合决策以脚本 `decision.action` 为准（含 regime 软降档后），Agent 勿擅自改写
 - 合并排序以脚本 `merged_buy_ranking` 为准，Agent 勿擅自改写名次
 - 建议数量以脚本 `trade_suggestions` 为准，Agent 勿手写金额/份额
+- 净值日与预计确认日按「执行日历」标注；不把决策档提前一天
+- 下一步用「再分析 / 再筛 / 收盘后再看」，不用「跑」
 - 不构成投资建议
 ```
 
@@ -369,6 +403,7 @@ python aiskill/fund-screening/scripts/test_market_regime.py
 python aiskill/fund-screening/scripts/test_manager_decay.py
 python aiskill/fund-screening/scripts/test_merged_buy_ranking.py
 python aiskill/fund-screening/scripts/test_suggest_sizes.py
+python aiskill/fund-screening/scripts/test_ac_gate.py
 ```
 
 ## 故障处理
@@ -379,7 +414,7 @@ python aiskill/fund-screening/scripts/test_suggest_sizes.py
 | 无持仓 | `holdings` 与 `holding_context.funds` 为空，跳过持仓分析节 |
 | `holding_context.funds` 少于持仓数 | 检查 API 是否部分失败；标注缺失项 |
 | API 失败 | 保留 DB 技术面数据，报告中标注 |
-| 指数 API 不可用 | `market_regime.index.status=unavailable`，仍用池内 regime；报告中注明 |
+| 指数 API 不可用 | 东方财富重试 + 新浪快照仍失败时 `index.status=unavailable`，仍用池内 regime；报告中注明 |
 | ANN 慢 | 减小 `--ann-pool`（仅影响买入榜 ANN） |
 | JSON 解析失败 | 改用上文 Python 写文件方式，勿用 PowerShell `Out-File` 直接管道 |
 
@@ -389,11 +424,17 @@ python aiskill/fund-screening/scripts/test_suggest_sizes.py
 - 不要编造 `market_regime`：必须来自脚本 JSON 顶层字段
 - 不要忽略 `holding_context.funds[].decision` 中的综合决策
 - 不要覆盖或改写 `decision.action`（含 regime 软降档结果）
+- 不要为赶成交日把加仓/减仓档提前或加重；执行滞后只写在「净值日 / 预计确认日」
+- 不要把 15:00 后下单的确认日写成下一个交易日；本账户是之后第 2 个交易日
+- 不要用 JSON `generated_at` 代替写报告时刻去算确认日
 - 不要手算或改写 `merged_buy_ranking` 名次；报告必须引用脚本结果
+- 不要把 `新建观察` 写进执行序或给它金额
+- 不要把未写入 `fund_ac_pairs.json` `pairs` 的份额当成 A/C
 - 不要手写编造 `trade_suggestions` 金额/份额；不要改回 12% 单基目标公式
 - 不要将 `buyable/salable` 与技术指标混淆
 - 不要将 `scripts/_tmp_*` 当作正式入口
 - 不要对池外推荐声称已通过 ANN 回测
+- 不要在面向用户的报告或下一步里用「跑」表示再做筛选（听成卖出）；写「再分析」「再筛一次」「收盘后再看」
 
 ## 代码索引
 

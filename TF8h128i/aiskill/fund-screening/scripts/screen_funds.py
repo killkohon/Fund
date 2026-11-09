@@ -152,8 +152,25 @@ def buy_exclusion_reason(
     fundcode: str,
     fundname: str,
     categoryname: str | None,
+    ac_mates: dict[str, str] | None = None,
 ) -> str | None:
     """买入榜前置排除；返回原因字符串，None 表示可进入候选。"""
+    # 已持有 A/C 的一只时，另一只不再占新建名额。配对只认已验证 pairs。
+    if ac_mates is None:
+        from find_ac_pairs import load_ac_mates
+
+        ac_mates = load_ac_mates()
+    mate = ac_mates.get(fundcode)
+    if mate:
+        try:
+            held = conn.execute(
+                "SELECT holding FROM fund_meta WHERE fundcode=?", (mate,)
+            ).fetchone()
+        except sqlite3.OperationalError:
+            held = None
+        if held and int(held[0] or 0) == 1:
+            return "A/C已持有"
+
     text = f"{fundname} {categoryname or ''}"
     if _BUY_EXCLUDE_QDII.search(text):
         return "QDII"

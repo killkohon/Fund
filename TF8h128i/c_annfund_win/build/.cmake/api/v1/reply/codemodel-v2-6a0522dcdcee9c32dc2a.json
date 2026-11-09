@@ -1,0 +1,372 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.18"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "c_annfund_win",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-Debug-187861048c3d79a28314.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-Debug-200a40d4d300ffc5e187.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "annfund::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-annfund-Debug-f70bdba09596d62e303a.json",
+					"name" : "annfund",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_bin_to_pth::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_bin_to_pth-Debug-b5dde0d92636cf2c6a51.json",
+					"name" : "test_bin_to_pth",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_compat::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_compat-Debug-211091eee8bbca138924.json",
+					"name" : "test_compat",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_pth_to_bin::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_pth_to_bin-Debug-34a838113acc0a0682bb.json",
+					"name" : "test_pth_to_bin",
+					"projectIndex" : 0
+				}
+			]
+		},
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Release-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.18"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "c_annfund_win",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-Release-187861048c3d79a28314.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-Release-200a40d4d300ffc5e187.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "annfund::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-annfund-Release-a531238c64b3a731d5e9.json",
+					"name" : "annfund",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_bin_to_pth::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_bin_to_pth-Release-9f12d4c510a3e5b2cd9d.json",
+					"name" : "test_bin_to_pth",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_compat::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_compat-Release-858edf243e2337985eb8.json",
+					"name" : "test_compat",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_pth_to_bin::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_pth_to_bin-Release-ee67f5d5f40eba2f783f.json",
+					"name" : "test_pth_to_bin",
+					"projectIndex" : 0
+				}
+			]
+		},
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-MinSizeRel-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.18"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"name" : "MinSizeRel",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "c_annfund_win",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-MinSizeRel-187861048c3d79a28314.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-MinSizeRel-200a40d4d300ffc5e187.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "annfund::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-annfund-MinSizeRel-75864c2fa0c188389e74.json",
+					"name" : "annfund",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_bin_to_pth::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_bin_to_pth-MinSizeRel-857c077b3da429c40c4b.json",
+					"name" : "test_bin_to_pth",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_compat::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_compat-MinSizeRel-a4aa45ea7c47e9fba6f1.json",
+					"name" : "test_compat",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_pth_to_bin::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_pth_to_bin-MinSizeRel-a72e0c67cc6742e1fe42.json",
+					"name" : "test_pth_to_bin",
+					"projectIndex" : 0
+				}
+			]
+		},
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-RelWithDebInfo-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.18"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"name" : "RelWithDebInfo",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "c_annfund_win",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-RelWithDebInfo-187861048c3d79a28314.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-RelWithDebInfo-200a40d4d300ffc5e187.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "annfund::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-annfund-RelWithDebInfo-1c4a6e9bece2ea618a0d.json",
+					"name" : "annfund",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_bin_to_pth::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_bin_to_pth-RelWithDebInfo-03fecbbf72d5b6938d88.json",
+					"name" : "test_bin_to_pth",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_compat::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_compat-RelWithDebInfo-2e809e8bebbae992dd19.json",
+					"name" : "test_compat",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test_pth_to_bin::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test_pth_to_bin-RelWithDebInfo-80a4dacdfa45e61ec22f.json",
+					"name" : "test_pth_to_bin",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "D:/workspace/personal/Fund/TF8h128i/c_annfund_win/build",
+		"source" : "D:/workspace/personal/Fund/TF8h128i/c_annfund_win"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 8
+	}
+}

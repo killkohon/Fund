@@ -1,0 +1,14 @@
+{
+  "OutputFoldersPerTargetSystem": {
+    "Local Machine": [
+      "build",
+      "out\\build\\x64-Release"
+    ]
+  },
+  "ExpandedNodes": [
+    "",
+    "\\src"
+  ],
+  "SelectedNode": "\\src\\model.cu",
+  "PreviewInSolutionExplorer": false
+}
